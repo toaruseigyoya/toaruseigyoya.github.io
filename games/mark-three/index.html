@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マークスリー | 無料ゲーム</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Segoe UI','Yu Gothic UI',sans-serif;background:linear-gradient(135deg,#fce7f3,#dcfce7);color:#14532d;display:grid;place-items:center;padding:18px}.wrap{width:min(96vw,480px)}a{color:#16a34a;text-decoration:none;font-weight:800}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.panel{background:rgba(255,255,255,.84);border:1px solid #fff;border-radius:22px;box-shadow:0 18px 44px rgba(22,163,74,.16);padding:18px}.score{display:flex;gap:8px;margin:12px 0}.score div{flex:1;background:#f0fdf4;border-radius:14px;text-align:center;padding:10px;font-weight:900}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;aspect-ratio:1}.cell{border:0;border-radius:18px;background:#fff7ed;color:#db2777;font-size:clamp(2.6rem,16vw,5rem);font-weight:900;box-shadow:inset 0 -5px 0 rgba(0,0,0,.08);cursor:pointer}.cell.o{color:#2563eb}.msg{text-align:center;min-height:32px;margin:12px 0;font-weight:900}.btn{width:100%;border:0;border-radius:14px;padding:12px;background:#14532d;color:white;font-weight:900;cursor:pointer}</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><a href="../">← 無料ゲーム一覧</a><strong>マークスリー</strong></div>
+    <div class="panel">
+      <h1>マークスリー</h1><p>あなたはX。縦・横・斜めのどれかを先にそろえます。</p>
+      <div class="score"><div>YOU <b id="you">0</b></div><div>CPU <b id="cpu">0</b></div><div>DRAW <b id="draw">0</b></div></div>
+      <div class="board" id="board"></div><div class="msg" id="msg"></div><button class="btn" id="reset">もう一局</button>
+    </div>
+  </div>
+<script>
+const board=document.getElementById('board'),msg=document.getElementById('msg'),score={you:0,cpu:0,draw:0};let cells,done=false;
+const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function win(a){return lines.find(l=>l.every(i=>cells[i]===a))}
+function render(){board.innerHTML='';cells.forEach((v,i)=>{const b=document.createElement('button');b.className='cell '+(v==='O'?'o':'');b.textContent=v;b.onclick=()=>play(i);board.appendChild(b)});['you','cpu','draw'].forEach(k=>document.getElementById(k).textContent=score[k])}
+function best(){const empty=cells.map((v,i)=>v?null:i).filter(v=>v!==null);for(const p of empty){cells[p]='O';if(win('O')){cells[p]='';return p}cells[p]=''}for(const p of empty){cells[p]='X';if(win('X')){cells[p]='';return p}cells[p]=''}return empty.includes(4)?4:empty[Math.floor(Math.random()*empty.length)]}
+function judge(){if(win('X')){msg.textContent='YOU WIN!';score.you++;done=true}else if(win('O')){msg.textContent='CPU WIN';score.cpu++;done=true}else if(cells.every(Boolean)){msg.textContent='DRAW';score.draw++;done=true}render()}
+function play(i){if(done||cells[i])return;cells[i]='X';judge();if(done)return;setTimeout(()=>{cells[best()]='O';judge()},240)}
+function reset(){cells=Array(9).fill('');done=false;msg.textContent='あなたの番です';render()}document.getElementById('reset').onclick=reset;reset();
+</script>
+</body>
+</html>

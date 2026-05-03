@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リバウンドブロック | 無料ゲーム</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Segoe UI','Yu Gothic UI',sans-serif;background:linear-gradient(135deg,#dbeafe,#fae8ff);color:#312e81;display:grid;place-items:center;padding:16px}.wrap{width:min(96vw,640px)}a{color:#4f46e5;text-decoration:none;font-weight:800}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.panel{background:rgba(255,255,255,.84);border:1px solid white;border-radius:22px;box-shadow:0 18px 44px rgba(79,70,229,.16);padding:16px}.hud{display:flex;gap:10px;margin:10px 0}.hud div,.btn{flex:1;background:#eef2ff;border-radius:14px;text-align:center;padding:10px;font-weight:900}.btn{border:0;background:#312e81;color:white;cursor:pointer}canvas{width:100%;aspect-ratio:4/3;background:#111827;border-radius:18px;display:block;touch-action:none}.msg{text-align:center;min-height:28px;margin-top:10px;font-weight:900}</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><a href="../">← 無料ゲーム一覧</a><strong>リバウンドブロック</strong></div>
+    <div class="panel">
+      <h1>リバウンドブロック</h1><p>左右キー・マウス・タッチでバーを動かし、色ブロックを消します。</p>
+      <div class="hud"><div>Score <b id="score">0</b></div><div>Life <b id="life">3</b></div><button class="btn" id="reset">新規</button></div>
+      <canvas id="cv" width="640" height="480"></canvas><div class="msg" id="msg"></div>
+    </div>
+  </div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),scoreEl=document.getElementById('score'),lifeEl=document.getElementById('life'),msg=document.getElementById('msg');
+let p,b,blocks,score,life,left=false,right=false,run=true,raf=0;
+function init(){cancelAnimationFrame(raf);p={x:260,w:120};b={x:320,y:360,vx:3.2,vy:-4,r:8};score=0;life=3;run=true;msg.textContent='';blocks=[];for(let y=0;y<5;y++)for(let x=0;x<8;x++)blocks.push({x:32+x*72,y:48+y*28,w:58,h:18,on:true,c:['#38bdf8','#a78bfa','#f472b6','#facc15','#34d399'][y]});draw();raf=requestAnimationFrame(step)}
+function step(){if(!run)return;if(left)p.x-=7;if(right)p.x+=7;p.x=Math.max(0,Math.min(640-p.w,p.x));b.x+=b.vx;b.y+=b.vy;if(b.x<b.r||b.x>640-b.r)b.vx*=-1;if(b.y<b.r)b.vy*=-1;if(b.y>480){life--;if(life<1){run=false;msg.textContent='GAME OVER'}else Object.assign(b,{x:320,y:360,vx:3.2,vy:-4})}if(b.y+b.r>420&&b.y-b.r<438&&b.x>p.x&&b.x<p.x+p.w){b.vy=-Math.abs(b.vy);b.vx+=(b.x-(p.x+p.w/2))/36}blocks.forEach(o=>{if(o.on&&b.x>o.x&&b.x<o.x+o.w&&b.y-b.r<o.y+o.h&&b.y+b.r>o.y){o.on=false;b.vy*=-1;score+=10}});if(blocks.every(o=>!o.on)){run=false;msg.textContent='CLEAR!'}draw();raf=requestAnimationFrame(step)}
+function draw(){ctx.clearRect(0,0,640,480);ctx.fillStyle='#111827';ctx.fillRect(0,0,640,480);blocks.forEach(o=>{if(o.on){ctx.fillStyle=o.c;ctx.fillRect(o.x,o.y,o.w,o.h);ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(o.x,o.y,o.w,4)}});ctx.fillStyle='#f8fafc';ctx.fillRect(p.x,420,p.w,18);ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle='#fb7185';ctx.fill();scoreEl.textContent=score;lifeEl.textContent=life}
+document.onkeydown=e=>{if(e.key==='ArrowLeft')left=true;if(e.key==='ArrowRight')right=true};document.onkeyup=e=>{if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false};cv.onpointermove=e=>{const r=cv.getBoundingClientRect();p.x=(e.clientX-r.left)/r.width*640-p.w/2};document.getElementById('reset').onclick=init;init();
+</script>
+</body>
+</html>

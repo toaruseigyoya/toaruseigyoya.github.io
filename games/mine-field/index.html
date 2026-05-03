@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マインフィールド | 無料ゲーム</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Segoe UI','Yu Gothic UI',sans-serif;background:linear-gradient(135deg,#cffafe,#f5d0fe);color:#164e63;display:grid;place-items:center;padding:16px}.wrap{width:min(96vw,560px)}a{color:#0891b2;text-decoration:none;font-weight:800}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.panel{background:rgba(255,255,255,.84);border:1px solid white;border-radius:22px;box-shadow:0 18px 44px rgba(8,145,178,.16);padding:16px}.bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}.bar div,.btn{border-radius:13px;background:#ecfeff;padding:10px;text-align:center;font-weight:900}.btn{border:0;background:#155e75;color:white;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;aspect-ratio:1}.cell{border:0;border-radius:8px;background:#67e8f9;color:#0f172a;font-weight:900;font-size:clamp(.8rem,4vw,1.2rem);cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.1)}.open{background:#f8fafc;box-shadow:none}.flag{background:#fbbf24}.bad{background:#fb7185;color:white}.msg{text-align:center;min-height:28px;margin-top:10px;font-weight:900}</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><a href="../">← 無料ゲーム一覧</a><strong>マインフィールド</strong></div>
+    <div class="panel">
+      <h1>マインフィールド</h1><p>危険マスを避けてすべて開きます。右クリックまたは長押しで旗。</p>
+      <div class="bar"><div>危険 <b id="mines">12</b></div><div>開封 <b id="opened">0</b></div><button class="btn" id="reset">新規</button></div>
+      <div class="grid" id="grid"></div><div class="msg" id="msg"></div>
+    </div>
+  </div>
+<script>
+const W=10,H=10,M=12,grid=document.getElementById('grid'),msg=document.getElementById('msg');let cells,over=false,opened=0;
+function around(i){const r=Math.floor(i/W),c=i%W,a=[];for(let y=r-1;y<=r+1;y++)for(let x=c-1;x<=c+1;x++)if(y>=0&&y<H&&x>=0&&x<W&&(y!==r||x!==c))a.push(y*W+x);return a}
+function newGame(){cells=Array.from({length:W*H},()=>({m:false,o:false,f:false,n:0}));over=false;opened=0;msg.textContent='';let placed=0;while(placed<M){let i=Math.floor(Math.random()*cells.length);if(!cells[i].m){cells[i].m=true;placed++}}cells.forEach((c,i)=>c.n=around(i).filter(j=>cells[j].m).length);render()}
+function reveal(i){const c=cells[i];if(over||c.o||c.f)return;c.o=true;opened++;if(c.m){over=true;msg.textContent='GAME OVER';cells.forEach(x=>{if(x.m)x.o=true});render();return}if(!c.n)around(i).forEach(reveal);if(opened===W*H-M){over=true;msg.textContent='CLEAR!'}render()}
+function flag(i){if(over||cells[i].o)return;cells[i].f=!cells[i].f;render()}
+function render(){grid.innerHTML='';cells.forEach((c,i)=>{const b=document.createElement('button');b.className='cell'+(c.o?' open':'')+(c.f?' flag':'')+(c.o&&c.m?' bad':'');b.textContent=c.o?(c.m?'◆':(c.n||'')):(c.f?'⚑':'');b.onclick=()=>reveal(i);b.oncontextmenu=e=>{e.preventDefault();flag(i)};let t;b.ontouchstart=()=>t=setTimeout(()=>flag(i),520);b.ontouchend=()=>clearTimeout(t);grid.appendChild(b)});document.getElementById('opened').textContent=opened}
+document.getElementById('reset').onclick=newGame;newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ナンバーマージ | 無料ゲーム</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Segoe UI','Yu Gothic UI',sans-serif;background:linear-gradient(135deg,#ffedd5,#ccfbf1);color:#431407;display:grid;place-items:center;padding:18px}.wrap{width:min(96vw,520px)}a{color:#ea580c;text-decoration:none;font-weight:800}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.panel{background:rgba(255,255,255,.84);border:1px solid white;border-radius:22px;box-shadow:0 18px 44px rgba(234,88,12,.15);padding:18px}.stats{display:flex;gap:10px;margin:10px 0}.stats div,.btn{flex:1;border-radius:14px;background:#fff7ed;text-align:center;padding:10px;font-weight:900}.btn{border:0;background:#7c2d12;color:#fff;cursor:pointer}.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;aspect-ratio:1;margin:14px 0}.tile{display:grid;place-items:center;border-radius:16px;background:#fed7aa;color:#7c2d12;font-size:clamp(1.2rem,7vw,2.4rem);font-weight:950}.v4{background:#fde68a}.v8{background:#fdba74}.v16{background:#fb923c;color:#fff}.v32{background:#f97316;color:#fff}.v64{background:#ec4899;color:#fff}.v128,.v256,.v512,.v1024,.v2048{background:#6366f1;color:white}.msg{text-align:center;min-height:28px;font-weight:900}</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><a href="../">← 無料ゲーム一覧</a><strong>ナンバーマージ</strong></div>
+    <div class="panel">
+      <h1>ナンバーマージ</h1><p>矢印キーまたはスワイプで同じ数字を重ねます。</p>
+      <div class="stats"><div>Score <b id="score">0</b></div><button class="btn" id="reset">新規</button></div>
+      <div class="board" id="board"></div><div class="msg" id="msg"></div>
+    </div>
+  </div>
+<script>
+const board=document.getElementById('board'),scoreEl=document.getElementById('score'),msg=document.getElementById('msg');let g,score,startX,startY;
+function newGame(){g=Array(16).fill(0);score=0;msg.textContent='';add();add();render()}
+function add(){const e=g.map((v,i)=>v?null:i).filter(v=>v!==null);if(e.length)g[e[Math.floor(Math.random()*e.length)]]=Math.random()<.88?2:4}
+function line(vals){const a=vals.filter(Boolean),out=[];let gain=0;for(let i=0;i<a.length;i++){if(a[i]===a[i+1]){out.push(a[i]*2);gain+=a[i]*2;i++}else out.push(a[i])}while(out.length<4)out.push(0);score+=gain;return out}
+function move(dir){const old=g.join();for(let i=0;i<4;i++){let idx=dir<2?[i*4,i*4+1,i*4+2,i*4+3]:[i,i+4,i+8,i+12];if(dir===1||dir===3)idx=idx.reverse();const res=line(idx.map(j=>g[j]));idx.forEach((j,k)=>g[j]=res[k])}if(g.join()!==old){add();render();if(!can())msg.textContent='GAME OVER'}}
+function can(){if(g.some(v=>!v))return true;for(let i=0;i<16;i++)if((i%4<3&&g[i]===g[i+1])||(i<12&&g[i]===g[i+4]))return true;return false}
+function render(){board.innerHTML='';g.forEach(v=>{const d=document.createElement('div');d.className='tile v'+v;d.textContent=v||'';board.appendChild(d)});scoreEl.textContent=score}
+document.addEventListener('keydown',e=>({ArrowLeft:0,ArrowRight:1,ArrowUp:2,ArrowDown:3}[e.key]!==undefined)&&(e.preventDefault(),move({ArrowLeft:0,ArrowRight:1,ArrowUp:2,ArrowDown:3}[e.key])));
+board.ontouchstart=e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY};board.ontouchend=e=>{const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;move(Math.abs(dx)>Math.abs(dy)?(dx>0?1:0):(dy>0?3:2))};document.getElementById('reset').onclick=newGame;newGame();
+</script>
+</body>
+</html>
