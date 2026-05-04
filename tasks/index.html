@@ -129,6 +129,25 @@
       gap: 10px;
       margin-bottom: 10px;
     }
+    .workspace-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+    .workspace-tabs button {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.68);
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .workspace-tabs button.active {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(37,99,235,.18);
+    }
     h2 { margin: 0; font-size: 1rem; }
     .count {
       padding: 0;
@@ -184,6 +203,8 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       background: rgba(255,255,255,.55);
+      max-height: min(420px, 72vh);
+      overflow: auto;
     }
     .editor-grid {
       display: grid;
@@ -200,6 +221,12 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(120px, .8fr);
       gap: 7px;
+    }
+    .new-task-group {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      gap: 7px;
+      margin-top: 10px;
     }
     .inline-fields {
       display: grid;
@@ -303,10 +330,10 @@
     }
     .task {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) auto;
-      gap: 7px;
+      grid-template-columns: 24px 42px minmax(0, 1fr) auto;
+      gap: 5px;
       align-items: center;
-      padding: 5px 8px;
+      padding: 3px 7px;
       border: 1px solid var(--line);
       border-radius: 9px;
       background: rgba(255,255,255,.72);
@@ -317,16 +344,31 @@
       background: linear-gradient(135deg, rgba(37,99,235,.13), rgba(8,145,178,.12));
       box-shadow: inset 3px 0 0 rgba(37,99,235,.45);
     }
-    .task input[type="checkbox"] { width: 16px; height: 16px; margin-top: 0; accent-color: var(--green); }
+    .task input[type="checkbox"] { width: 15px; height: 15px; margin-top: 0; accent-color: var(--green); }
+    .task-order {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+    .task-order button, .group-left button, .group-settings-list button {
+      border-radius: 8px;
+      padding: 2px 5px;
+      min-height: 0;
+      background: #e0f2fe;
+      color: var(--cyan);
+      font-size: .66rem;
+      line-height: 1.25;
+    }
     .task-text {
       min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       color: var(--task-color, var(--text));
-      line-height: 1.25;
+      line-height: 1.15;
       font-weight: 700;
     }
+    .note-mark { color: var(--cyan); font-size: .72rem; font-weight: 900; margin-left: 4px; }
     .task-meta {
       display: flex;
       flex-wrap: nowrap;
@@ -392,9 +434,14 @@
       font: inherit;
       outline: none;
     }
+    .edit-textarea {
+      min-height: 70px;
+      resize: vertical;
+      line-height: 1.55;
+    }
     .list-actions {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       margin-top: 14px;
     }
@@ -444,6 +491,43 @@
     }
     .info-card p { margin: 0 0 10px; }
     .info-card ul { margin: 0; padding-left: 1.2em; }
+    .group-modal {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 20;
+      width: min(420px, calc(100vw - 36px));
+      max-height: min(520px, calc(100vh - 80px));
+      overflow: auto;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 16px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 22px 60px rgba(15,23,42,.22);
+      display: none;
+    }
+    .group-modal.open { display: block; }
+    .group-modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .group-settings-list { display: grid; gap: 6px; }
+    .group-settings-row {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(224,242,254,.28);
+      font-size: .82rem;
+      font-weight: 850;
+    }
+    .group-settings-row label { margin: 0; font-size: .72rem; }
     .toast {
       min-height: 28px;
       margin-top: 10px;
@@ -458,9 +542,10 @@
       .app { grid-template-columns: 1fr; }
       .panel { min-height: auto; }
       .task-list { max-height: none; }
-      .task { grid-template-columns: 28px minmax(0, 1fr); }
-      .task-meta { grid-column: 2; justify-content: flex-start; }
+      .task { grid-template-columns: 24px 42px minmax(0, 1fr); }
+      .task-meta { grid-column: 3; justify-content: flex-start; }
       .list-actions { grid-template-columns: 1fr 1fr; }
+      .new-task-group { grid-template-columns: 1fr; }
       .info-sections { grid-template-columns: 1fr; }
     }
     @media (max-width: 520px) {
@@ -468,7 +553,7 @@
       textarea { min-height: 104px; }
       .list-actions { grid-template-columns: 1fr; }
       button { min-height: 42px; }
-      .task { padding: 7px 8px; }
+      .task { padding: 4px 7px; }
       .task-meta { gap: 5px; }
     }
   </style>
@@ -493,12 +578,18 @@
     </section>
     <div class="app">
       <section class="panel input-panel">
+        <div class="workspace-tabs" id="workspaceTabs" aria-label="タスク管理タブ"></div>
         <div class="panel-head">
           <h2>入力</h2>
         </div>
         <label for="taskInput">タスク内容</label>
         <textarea id="taskInput" placeholder="例: 見積書を確認する&#10;部品表を更新する"></textarea>
         <p class="input-note">※ 改行ごとに別タスクとして登録できます。</p>
+        <div class="new-task-group">
+          <select class="field" id="newTaskGroup" aria-label="追加先グループ"></select>
+          <input class="field" id="newGroupName" type="text" placeholder="新規グループ名">
+          <button class="subtle" id="createGroupButton" type="button">作成</button>
+        </div>
         <div class="quick-guide">
           <strong>使い方：</strong>1行に1件ずつタスクを入力してください。複数行入力すると、まとめて複数タスクを追加できます。
           <pre>入力例:
@@ -522,6 +613,7 @@
         </div>
         <div id="taskList" class="task-list" aria-live="polite"></div>
         <div class="list-actions">
+          <button class="subtle" id="groupSettingsButton" type="button">グループ順序設定</button>
           <button class="subtle" id="exportJsonButton" type="button">JSON保存</button>
           <button class="subtle" id="exportCsvButton" type="button">CSV保存</button>
           <button class="danger" id="deleteButton" type="button" disabled title="選択中のタスクを削除します。">選択を削除</button>
@@ -550,15 +642,31 @@
     </section>
   </main>
 
+  <div class="group-modal" id="groupModal" aria-hidden="true">
+    <div class="group-modal-head">
+      <h2>グループ順序設定</h2>
+      <button class="subtle" id="groupModalClose" type="button">閉じる</button>
+    </div>
+    <div class="group-settings-list" id="groupSettingsList"></div>
+  </div>
+
   <script>
     (function () {
       var input = document.getElementById('taskInput');
       var taskButton = document.getElementById('taskButton');
+      var workspaceTabs = document.getElementById('workspaceTabs');
+      var newTaskGroup = document.getElementById('newTaskGroup');
+      var newGroupName = document.getElementById('newGroupName');
+      var createGroupButton = document.getElementById('createGroupButton');
       var dropZone = document.getElementById('dropZone');
       var fileInput = document.getElementById('fileInput');
       var filePick = document.getElementById('filePick');
       var list = document.getElementById('taskList');
       var count = document.getElementById('taskCount');
+      var groupSettingsButton = document.getElementById('groupSettingsButton');
+      var groupModal = document.getElementById('groupModal');
+      var groupModalClose = document.getElementById('groupModalClose');
+      var groupSettingsList = document.getElementById('groupSettingsList');
       var deleteButton = document.getElementById('deleteButton');
       var clearDoneButton = document.getElementById('clearDoneButton');
       var exportJsonButton = document.getElementById('exportJsonButton');
@@ -566,15 +674,27 @@
       var toast = document.getElementById('toast');
       var storageKey = 'toaruseigyoya-task-app';
       var groupOrderKey = 'toaruseigyoya-task-groups';
+      var hiddenGroupsKey = 'toaruseigyoya-task-hidden-groups';
+      var workspaceKey = 'toaruseigyoya-task-workspace';
+      var workspaces = ['業務', '個人的'];
+      var activeWorkspace = localStorage.getItem(workspaceKey) || workspaces[0];
       var colors = ['#2563eb', '#0891b2', '#16a34a', '#f59e0b', '#e11d48', '#7c3aed', '#475569', '#db2777', '#ea580c', '#0f766e'];
       var selectedId = null;
       var selectedDisplayGroup = null;
       var tasks = load();
       var groupOrder = loadGroupOrder();
+      var hiddenGroups = loadHiddenGroups();
 
       function load() {
         try {
-          return JSON.parse(localStorage.getItem(storageKey) || '[]');
+          return JSON.parse(localStorage.getItem(storageKey) || '[]').map(function (task, index) {
+            return Object.assign({
+              workspace: workspaces[0],
+              order: index,
+              note: '',
+              items: []
+            }, task);
+          });
         } catch (e) {
           return [];
         }
@@ -586,9 +706,10 @@
 
       function loadGroupOrder() {
         try {
-          return JSON.parse(localStorage.getItem(groupOrderKey) || '[]');
+          var saved = JSON.parse(localStorage.getItem(groupOrderKey) || '{}');
+          return Array.isArray(saved) ? { [workspaces[0]]: saved } : saved;
         } catch (e) {
-          return [];
+          return {};
         }
       }
 
@@ -596,8 +717,63 @@
         localStorage.setItem(groupOrderKey, JSON.stringify(groupOrder));
       }
 
+      function loadHiddenGroups() {
+        try {
+          return JSON.parse(localStorage.getItem(hiddenGroupsKey) || '{}');
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function saveHiddenGroups() {
+        localStorage.setItem(hiddenGroupsKey, JSON.stringify(hiddenGroups));
+      }
+
+      function workspaceTasks() {
+        return tasks.filter(function (task) { return (task.workspace || workspaces[0]) === activeWorkspace; });
+      }
+
+      function workspaceOrder() {
+        if (!Array.isArray(groupOrder[activeWorkspace])) groupOrder[activeWorkspace] = [];
+        return groupOrder[activeWorkspace];
+      }
+
+      function workspaceHidden() {
+        if (!Array.isArray(hiddenGroups[activeWorkspace])) hiddenGroups[activeWorkspace] = [];
+        return hiddenGroups[activeWorkspace];
+      }
+
+      function isGroupHidden(group) {
+        return workspaceHidden().includes(group);
+      }
+
       function show(message) {
         toast.textContent = message || '';
+      }
+
+      function normalizeGroupName(name) {
+        return (name || '').trim() || '未分類';
+      }
+
+      function ensureGroup(group) {
+        group = normalizeGroupName(group);
+        var order = workspaceOrder();
+        if (!order.includes(group)) {
+          var unclassified = order.indexOf('未分類');
+          if (group !== '未分類' && unclassified >= 0) order.splice(unclassified, 0, group);
+          else order.push(group);
+          saveGroupOrder();
+        }
+        return group;
+      }
+
+      function createGroup() {
+        var group = normalizeGroupName(newGroupName.value);
+        ensureGroup(group);
+        newGroupName.value = '';
+        newTaskGroup.value = group;
+        show('グループ「' + group + '」を作成しました。');
+        render();
       }
 
       function addTask() {
@@ -609,16 +785,20 @@
           input.focus();
           return;
         }
+        var group = ensureGroup(newTaskGroup.value || newGroupName.value || '未分類');
         var added = lines.map(function (text) {
           return {
             id: makeId(),
             text: text,
             done: false,
             color: colors[0],
-            group: '未分類',
+            group: group,
+            workspace: activeWorkspace,
+            order: nextTaskOrder(group),
             priority: '中',
             progress: '未着手',
             due: '',
+            note: '',
             items: []
           };
         });
@@ -634,6 +814,7 @@
         var samples = kind === 'work'
           ? ['見積書を確認する', '部品表を更新する', '制御盤レイアウトを見直す']
           : ['買い物リストを作る', 'レンタカーを手配する', '旅行の持ち物を確認する'];
+        newTaskGroup.value = ensureGroup(kind === 'work' ? '業務' : '個人');
         input.value = samples.join('\n');
         addTask();
       }
@@ -653,27 +834,29 @@
       }
 
       function exportJson() {
-        if (!tasks.length) {
+        if (!workspaceTasks().length) {
           show('保存するタスクはありません。');
           return;
         }
-        downloadText('tasks-backup.json', JSON.stringify(tasks, null, 2), 'application/json;charset=utf-8');
+        downloadText('tasks-backup.json', JSON.stringify(workspaceTasks(), null, 2), 'application/json;charset=utf-8');
       }
 
       function exportCsv() {
-        if (!tasks.length) {
+        if (!workspaceTasks().length) {
           show('保存するタスクはありません。');
           return;
         }
-        var rows = [['タスク', '完了', 'グループ', '重要度', '進捗', '期限', 'サブ項目']];
-        tasks.forEach(function (task) {
+        var rows = [['タブ', 'タスク', '完了', 'グループ', '重要度', '進捗', '期限', '備考', 'サブ項目']];
+        workspaceTasks().forEach(function (task) {
           rows.push([
+            task.workspace || workspaces[0],
             task.text,
             task.done ? '完了' : '未完了',
             taskGroup(task),
             task.priority || '中',
             task.progress || '未着手',
             task.due || '',
+            task.note || '',
             (task.items || []).map(function (item) { return (item.done ? '[x] ' : '[ ] ') + item.text; }).join(' / ')
           ]);
         });
@@ -729,50 +912,114 @@
         render();
       }
 
+      function updateItemText(taskId, itemId, text) {
+        var nextText = text.trim();
+        if (!nextText) return;
+        tasks = tasks.map(function (task) {
+          if (task.id !== taskId) return task;
+          var items = (task.items || []).map(function (item) {
+            return item.id === itemId ? Object.assign({}, item, { text: nextText }) : item;
+          });
+          return Object.assign({}, task, { items: items });
+        });
+        save();
+        render();
+      }
+
       function selectedTask() {
         return tasks.find(function (task) { return task.id === selectedId; }) || null;
       }
 
       function updateSelected(values) {
         if (!selectedId) return;
+        var changedGroup = Object.prototype.hasOwnProperty.call(values, 'group');
+        if (changedGroup) {
+          values.group = ensureGroup(values.group);
+          values.order = nextTaskOrder(values.group);
+        }
         tasks = tasks.map(function (task) {
           return task.id === selectedId ? Object.assign({}, task, values) : task;
         });
+        if (changedGroup) selectedDisplayGroup = values.group;
         save();
         syncGroupOrder();
         render();
       }
 
       function taskGroup(task) {
-        return (task.group || '未分類').trim() || '未分類';
+        return normalizeGroupName(task.group);
       }
 
       function groupsFromTasks() {
-        return tasks.reduce(function (acc, task) {
+        return workspaceTasks().reduce(function (acc, task) {
           var group = taskGroup(task);
           if (!acc.includes(group)) acc.push(group);
           return acc;
-        }, []);
+        }, workspaceOrder().slice());
       }
 
       function syncGroupOrder() {
         var groups = groupsFromTasks();
-        groupOrder = groupOrder.filter(function (group) { return groups.includes(group); });
+        var order = workspaceOrder().filter(function (group) { return groups.includes(group); });
         groups.forEach(function (group) {
-          if (!groupOrder.includes(group)) groupOrder.push(group);
+          if (!order.includes(group)) {
+            var unclassified = order.indexOf('未分類');
+            if (group !== '未分類' && unclassified >= 0) order.splice(unclassified, 0, group);
+            else order.push(group);
+          }
         });
+        groupOrder[activeWorkspace] = order;
         saveGroupOrder();
       }
 
       function moveGroup(group, direction) {
         syncGroupOrder();
-        var index = groupOrder.indexOf(group);
+        var order = workspaceOrder();
+        var index = order.indexOf(group);
         var next = index + direction;
-        if (index < 0 || next < 0 || next >= groupOrder.length) return;
-        var temp = groupOrder[index];
-        groupOrder[index] = groupOrder[next];
-        groupOrder[next] = temp;
+        if (index < 0 || next < 0 || next >= order.length) return;
+        var temp = order[index];
+        order[index] = order[next];
+        order[next] = temp;
         saveGroupOrder();
+        render();
+      }
+
+      function nextTaskOrder(group) {
+        var groupTasks = workspaceTasks().filter(function (task) { return taskGroup(task) === group; });
+        if (!groupTasks.length) return 0;
+        return groupTasks.reduce(function (min, task) { return Math.min(min, Number(task.order) || 0); }, Number(groupTasks[0].order) || 0) - 1;
+      }
+
+      function moveTask(id, direction) {
+        var task = tasks.find(function (item) { return item.id === id; });
+        if (!task) return;
+        var group = taskGroup(task);
+        var groupTasks = workspaceTasks().filter(function (item) { return taskGroup(item) === group; }).sort(sortTasks);
+        var index = groupTasks.findIndex(function (item) { return item.id === id; });
+        var next = index + direction;
+        if (index < 0 || next < 0 || next >= groupTasks.length) return;
+        var currentOrder = Number.isFinite(Number(groupTasks[index].order)) ? Number(groupTasks[index].order) : index;
+        var nextOrder = Number.isFinite(Number(groupTasks[next].order)) ? Number(groupTasks[next].order) : next;
+        tasks = tasks.map(function (item) {
+          if (item.id === groupTasks[index].id) return Object.assign({}, item, { order: nextOrder });
+          if (item.id === groupTasks[next].id) return Object.assign({}, item, { order: currentOrder });
+          return item;
+        });
+        save();
+        render();
+      }
+
+      function sortTasks(a, b) {
+        return (Number(a.order) || 0) - (Number(b.order) || 0);
+      }
+
+      function switchWorkspace(name) {
+        activeWorkspace = name;
+        localStorage.setItem(workspaceKey, activeWorkspace);
+        selectedId = null;
+        selectedDisplayGroup = null;
+        syncGroupOrder();
         render();
       }
 
@@ -821,6 +1068,16 @@
         return wrap;
       }
 
+      function textField(value, placeholder, onChange) {
+        var field = document.createElement('input');
+        field.className = 'field';
+        field.type = 'text';
+        field.value = value || '';
+        field.placeholder = placeholder || '';
+        field.addEventListener('change', function () { onChange(field.value); });
+        return field;
+      }
+
       function renderTaskEditor(task) {
         var editor = document.createElement('div');
         editor.className = 'task-editor';
@@ -838,6 +1095,10 @@
 
         var grid = document.createElement('div');
         grid.className = 'editor-grid tool-block';
+
+        var titleInput = textField(task.text, 'タスク名', function (value) {
+          updateSelected({ text: value.trim() || task.text });
+        });
 
         var groupInput = document.createElement('input');
         groupInput.className = 'field';
@@ -883,8 +1144,18 @@
         inlineFields.appendChild(prioritySelect);
         inlineFields.appendChild(progressSelect);
 
+        var noteInput = document.createElement('textarea');
+        noteInput.className = 'field edit-textarea';
+        noteInput.placeholder = '備考を入力';
+        noteInput.value = task.note || '';
+        noteInput.addEventListener('change', function () {
+          updateSelected({ note: noteInput.value });
+        });
+
+        grid.appendChild(fieldBlock('タスク名', titleInput));
         grid.appendChild(fieldBlock('グループ', groupFields));
         grid.appendChild(fieldBlock('期限・重要度・進捗', inlineFields));
+        grid.appendChild(fieldBlock('備考', noteInput));
 
         var subtasks = document.createElement('div');
         subtasks.className = 'subtasks';
@@ -900,8 +1171,12 @@
             toggleItem(task.id, sub.id, subCheck.checked);
           });
 
-          var subText = document.createElement('span');
-          subText.textContent = sub.text;
+          var subText = document.createElement('input');
+          subText.className = 'field';
+          subText.type = 'text';
+          subText.value = sub.text;
+          subText.addEventListener('click', function (event) { event.stopPropagation(); });
+          subText.addEventListener('change', function () { updateItemText(task.id, sub.id, subText.value); });
           row.appendChild(subCheck);
           row.appendChild(subText);
           subtasks.appendChild(row);
@@ -940,12 +1215,12 @@
       }
 
       function clearDone() {
-        if (!tasks.some(function (task) { return task.done; })) {
+        if (!workspaceTasks().some(function (task) { return task.done; })) {
           show('完了タスクはありません。');
           return;
         }
         if (!confirm('完了タスクを全て削除してもよろしいですか')) return;
-        tasks = tasks.filter(function (task) { return !task.done; });
+        tasks = tasks.filter(function (task) { return (task.workspace || workspaces[0]) !== activeWorkspace || !task.done; });
         if (!tasks.some(function (task) { return task.id === selectedId; })) selectedId = null;
         if (!selectedId) selectedDisplayGroup = null;
         save();
@@ -955,6 +1230,7 @@
       function deleteGroup(group) {
         if (!confirm('グループ「' + group + '」のタスクを全て削除してもよろしいですか')) return;
         tasks = tasks.filter(function (task) {
+          if ((task.workspace || workspaces[0]) !== activeWorkspace) return true;
           var displayGroup = task.id === selectedId && selectedDisplayGroup ? selectedDisplayGroup : taskGroup(task);
           return displayGroup !== group;
         });
@@ -963,20 +1239,95 @@
           selectedDisplayGroup = null;
         }
         save();
+        groupOrder[activeWorkspace] = workspaceOrder().filter(function (item) { return item !== group; });
+        hiddenGroups[activeWorkspace] = workspaceHidden().filter(function (item) { return item !== group; });
+        saveGroupOrder();
+        saveHiddenGroups();
         syncGroupOrder();
         render();
       }
 
+      function renderWorkspaceTabs() {
+        workspaceTabs.innerHTML = '';
+        workspaces.forEach(function (name) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = name;
+          button.className = name === activeWorkspace ? 'active' : '';
+          button.addEventListener('click', function () { switchWorkspace(name); });
+          workspaceTabs.appendChild(button);
+        });
+      }
+
+      function renderNewTaskGroups() {
+        var current = newTaskGroup.value || '未分類';
+        newTaskGroup.innerHTML = '';
+        syncGroupOrder();
+        if (!workspaceOrder().length) ensureGroup('未分類');
+        workspaceOrder().forEach(function (group) {
+          var opt = document.createElement('option');
+          opt.value = group;
+          opt.textContent = group;
+          newTaskGroup.appendChild(opt);
+        });
+        newTaskGroup.value = workspaceOrder().includes(current) ? current : workspaceOrder()[0] || '未分類';
+      }
+
+      function toggleGroupHidden(group) {
+        var hidden = workspaceHidden();
+        if (hidden.includes(group)) hiddenGroups[activeWorkspace] = hidden.filter(function (item) { return item !== group; });
+        else hidden.push(group);
+        saveHiddenGroups();
+        render();
+      }
+
+      function renderGroupSettings() {
+        groupSettingsList.innerHTML = '';
+        syncGroupOrder();
+        workspaceOrder().forEach(function (group, index) {
+          var row = document.createElement('div');
+          row.className = 'group-settings-row';
+          var up = document.createElement('button');
+          up.type = 'button';
+          up.textContent = '↑';
+          up.disabled = index === 0;
+          up.addEventListener('click', function () { moveGroup(group, -1); });
+          var down = document.createElement('button');
+          down.type = 'button';
+          down.textContent = '↓';
+          down.disabled = index === workspaceOrder().length - 1;
+          down.addEventListener('click', function () { moveGroup(group, 1); });
+          var name = document.createElement('span');
+          name.textContent = group;
+          var visible = document.createElement('label');
+          var check = document.createElement('input');
+          check.type = 'checkbox';
+          check.checked = !isGroupHidden(group);
+          check.addEventListener('change', function () { toggleGroupHidden(group); });
+          visible.appendChild(check);
+          visible.appendChild(document.createTextNode('表示'));
+          row.appendChild(up);
+          row.appendChild(down);
+          row.appendChild(name);
+          row.appendChild(visible);
+          groupSettingsList.appendChild(row);
+        });
+      }
+
       function render() {
         list.innerHTML = '';
-        var notStarted = tasks.filter(function (task) { return !task.done && (task.progress || '未着手') === '未着手'; }).length;
-        var inProgress = tasks.filter(function (task) { return !task.done && task.progress === '進行中'; }).length;
-        var doneCount = tasks.filter(function (task) { return task.done; }).length;
-        count.textContent = '全件: ' + tasks.length + '、未着手: ' + notStarted + '、進行中: ' + inProgress + '、完了: ' + doneCount;
+        var visibleWorkspaceTasks = workspaceTasks();
+        var notStarted = visibleWorkspaceTasks.filter(function (task) { return !task.done && (task.progress || '未着手') === '未着手'; }).length;
+        var inProgress = visibleWorkspaceTasks.filter(function (task) { return !task.done && task.progress === '進行中'; }).length;
+        var doneCount = visibleWorkspaceTasks.filter(function (task) { return task.done; }).length;
+        count.textContent = '全件: ' + visibleWorkspaceTasks.length + '、未着手: ' + notStarted + '、進行中: ' + inProgress + '、完了: ' + doneCount;
         deleteButton.disabled = !selectedId;
         syncGroupOrder();
+        renderWorkspaceTabs();
+        renderNewTaskGroups();
+        renderGroupSettings();
 
-        if (!tasks.length) {
+        if (!visibleWorkspaceTasks.length) {
           var empty = document.createElement('div');
           empty.className = 'empty';
           var guide = document.createElement('div');
@@ -1009,14 +1360,23 @@
           return;
         }
 
-        var grouped = tasks.reduce(function (acc, task) {
+        var grouped = visibleWorkspaceTasks.reduce(function (acc, task) {
           var group = task.id === selectedId && selectedDisplayGroup ? selectedDisplayGroup : taskGroup(task);
           if (!acc[group]) acc[group] = [];
           acc[group].push(task);
           return acc;
         }, {});
 
-        groupOrder.filter(function (group) { return grouped[group]; }).forEach(function (group, groupIndex) {
+        var visibleGroups = workspaceOrder().filter(function (group) { return grouped[group] && !isGroupHidden(group); });
+        if (!visibleGroups.length) {
+          var hiddenEmpty = document.createElement('div');
+          hiddenEmpty.className = 'empty';
+          hiddenEmpty.textContent = '表示中のグループはありません。グループ順序設定で表示を戻してください。';
+          list.appendChild(hiddenEmpty);
+          return;
+        }
+
+        visibleGroups.forEach(function (group, groupIndex) {
           var heading = document.createElement('div');
           heading.className = 'group-title';
           var groupLeft = document.createElement('div');
@@ -1033,8 +1393,12 @@
           var down = document.createElement('button');
           down.type = 'button';
           down.textContent = '↓';
-          down.disabled = groupIndex === groupOrder.length - 1;
+          down.disabled = groupIndex === workspaceOrder().length - 1;
           down.addEventListener('click', function () { moveGroup(group, 1); });
+          var toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.textContent = '非表示';
+          toggle.addEventListener('click', function () { toggleGroupHidden(group); });
           var remove = document.createElement('button');
           remove.type = 'button';
           remove.textContent = '削除';
@@ -1042,15 +1406,17 @@
           groupLeft.appendChild(up);
           groupLeft.appendChild(down);
           groupLeft.appendChild(groupName);
+          actions.appendChild(toggle);
           actions.appendChild(remove);
           heading.appendChild(groupLeft);
           heading.appendChild(actions);
           list.appendChild(heading);
 
-          grouped[group].forEach(function (task) {
+          grouped[group].sort(sortTasks).forEach(function (task) {
           var item = document.createElement('div');
           item.className = 'task' + (task.done ? ' done' : '') + (task.id === selectedId ? ' selected' : '');
           item.style.setProperty('--task-color', task.color || colors[0]);
+          item.setAttribute('data-task-id', task.id);
           item.tabIndex = 0;
           item.setAttribute('role', 'button');
           item.setAttribute('aria-pressed', task.id === selectedId ? 'true' : 'false');
@@ -1064,9 +1430,36 @@
             toggleDone(task.id, checkbox.checked);
           });
 
+          var taskOrder = document.createElement('div');
+          taskOrder.className = 'task-order';
+          var taskUp = document.createElement('button');
+          taskUp.type = 'button';
+          taskUp.textContent = '↑';
+          taskUp.setAttribute('aria-label', 'タスクを上へ');
+          taskUp.addEventListener('click', function (event) {
+            event.stopPropagation();
+            moveTask(task.id, -1);
+          });
+          var taskDown = document.createElement('button');
+          taskDown.type = 'button';
+          taskDown.textContent = '↓';
+          taskDown.setAttribute('aria-label', 'タスクを下へ');
+          taskDown.addEventListener('click', function (event) {
+            event.stopPropagation();
+            moveTask(task.id, 1);
+          });
+          taskOrder.appendChild(taskUp);
+          taskOrder.appendChild(taskDown);
+
           var text = document.createElement('div');
           text.className = 'task-text';
           text.textContent = task.text;
+          if (task.note) {
+            var noteMark = document.createElement('span');
+            noteMark.className = 'note-mark';
+            noteMark.textContent = '備';
+            text.appendChild(noteMark);
+          }
 
           var meta = document.createElement('div');
           meta.className = 'task-meta';
@@ -1121,6 +1514,7 @@
           });
 
           item.appendChild(checkbox);
+          item.appendChild(taskOrder);
           item.appendChild(text);
           item.appendChild(meta);
           if ((task.items || []).length) item.appendChild(subtasks);
@@ -1128,6 +1522,12 @@
           list.appendChild(item);
         });
         });
+        if (selectedId) {
+          setTimeout(function () {
+            var selected = list.querySelector('[data-task-id="' + selectedId + '"]');
+            if (selected) selected.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          }, 0);
+        }
       }
 
       function importFiles(files) {
@@ -1144,6 +1544,22 @@
       }
 
       taskButton.addEventListener('click', addTask);
+      createGroupButton.addEventListener('click', createGroup);
+      newGroupName.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          createGroup();
+        }
+      });
+      groupSettingsButton.addEventListener('click', function () {
+        groupModal.classList.add('open');
+        groupModal.setAttribute('aria-hidden', 'false');
+        renderGroupSettings();
+      });
+      groupModalClose.addEventListener('click', function () {
+        groupModal.classList.remove('open');
+        groupModal.setAttribute('aria-hidden', 'true');
+      });
       filePick.addEventListener('click', function () { fileInput.click(); });
       fileInput.addEventListener('change', function () {
         importFiles(fileInput.files);
