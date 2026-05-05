@@ -36,6 +36,8 @@
     .preview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
     .preview-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:10px; box-shadow:0 2px 10px rgba(79,70,229,.06); }
     canvas { width:100%; height:auto; display:block; border-radius:10px; background:#fff; border:1px solid #eef2ff; }
+    .preview-shot { width:100%; height:auto; display:block; border-radius:10px; border:1px solid #eef2ff; background:#fff; }
+    .canvas-source { display:none; }
     .preview-actions { display:flex; gap:7px; margin-top:8px; }
     .preview-actions button { flex:1; padding:7px 8px; font-size:.74rem; }
     .score-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
@@ -66,9 +68,9 @@
         <button class="btn-outline" type="button" id="sampleBtn">サンプル</button>
       </div>
       <label for="title">タイトル</label>
-      <input id="title" placeholder="例：仕事で使える無料ツール集">
+      <input id="title" placeholder="例：仕事で使える無料ツール集" value="仕事で使える無料ツール集">
       <label for="subtitle">サブタイトル</label>
-      <textarea id="subtitle" placeholder="例：登録不要・ブラウザだけで使える"></textarea>
+      <textarea id="subtitle" placeholder="例：登録不要・ブラウザだけで使える">登録不要・ブラウザだけで使える。文章、変換、計算、画像までまとめて使えます。</textarea>
       <div class="grid2">
         <div><label for="useType">用途</label><select id="useType"><option>SNS投稿</option><option>ブログ</option><option>資料表紙</option><option>4コマ表紙</option><option>名言画像</option><option>ツール紹介</option></select></div>
         <div><label for="mood">雰囲気</label><select id="mood"><option>ビジネス</option><option>シンプル</option><option>ポップ</option><option>かわいい</option><option>制御屋風</option></select></div>
@@ -78,7 +80,7 @@
         <div><label for="palette">配色</label><select id="palette"><option>ブルー</option><option>ピンク</option><option>ミント</option><option>モノクロ</option><option>ランダム</option></select></div>
       </div>
       <div class="grid2">
-        <div><label for="keyword">キーワード</label><input id="keyword" placeholder="例：AI, 仕事, PLC"></div>
+        <div><label for="keyword">キーワード</label><input id="keyword" placeholder="例：AI, 仕事, PLC" value="仕事, ツール, 無料"></div>
         <div><label for="icon">アイコン</label><select id="icon"><option>⚙️</option><option>✉️</option><option>📊</option><option>💡</option><option>🧸</option><option>🤖</option><option>なし</option></select></div>
       </div>
       <div class="chips" aria-label="提案チップ">
@@ -119,10 +121,10 @@
       var key = val('palette');
       if (key === 'ランダム') {
         var keys = Object.keys(palettes);
-        key = keys[(seed + Date.now()) % keys.length];
+        key = keys[Math.abs(seed + Date.now()) % keys.length];
       }
       var list = palettes[key] || palettes['ブルー'];
-      return list[seed % list.length];
+      return list[Math.abs(seed) % list.length];
     }
     function wrap(ctx, text, maxWidth, fontSize, maxLines) {
       var chars = Array.from(String(text || ''));
@@ -169,14 +171,17 @@
     }
     function drawCanvas(canvas, variant) {
       var size = val('size').split('x').map(Number), w = size[0], h = size[1];
+      if (!w || !h) { w = 1080; h = 1080; }
       canvas.width = w; canvas.height = h;
       var ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvasを利用できません。ブラウザ設定を確認してください。');
       var colors = pickPalette();
       var title = val('title') || 'タイトルを入力してください';
       var subtitle = val('subtitle') || 'サブタイトルを入力すると画像に反映されます';
       var keyword = val('keyword');
       var icon = val('icon') === 'なし' ? '' : val('icon');
       drawPattern(ctx, w, h, colors, variant);
+      drawIllustration(ctx, w, h, colors, variant);
       var pad = Math.round(Math.min(w, h) * .075);
       var cardX = variant % 2 ? pad : pad * 1.25;
       var cardY = variant === 2 ? pad * 1.45 : pad;
@@ -218,6 +223,35 @@
         });
       }
     }
+    function drawIllustration(ctx, w, h, colors, variant) {
+      var scale = Math.min(w, h);
+      var cx = w * (variant % 2 ? .78 : .22);
+      var cy = h * (variant === 2 ? .22 : .78);
+      ctx.save();
+      ctx.globalAlpha = .9;
+      ctx.fillStyle = colors[1];
+      roundRect(ctx, cx - scale * .09, cy - scale * .08, scale * .18, scale * .16, scale * .03);
+      ctx.fill();
+      ctx.fillStyle = colors[2];
+      ctx.beginPath();
+      ctx.arc(cx + scale * .1, cy - scale * .09, scale * .06, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = colors[3];
+      ctx.lineWidth = Math.max(6, scale * .01);
+      for (var i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx - scale * .14 + i * scale * .08, cy + scale * .12);
+        ctx.lineTo(cx - scale * .09 + i * scale * .08, cy + scale * .19);
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.font = '900 ' + Math.round(scale * .055) + 'px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('AI', cx, cy);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
     function roundRect(ctx, x, y, w, h, r) {
       r = Math.min(r, w / 2, h / 2);
       ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
@@ -233,44 +267,72 @@
     }
     function saveHistory() {
       var item = { title: val('title'), subtitle: val('subtitle'), keyword: val('keyword'), mood: val('mood'), palette: val('palette'), size: val('size') };
-      var list = JSON.parse(localStorage.getItem('image-maker-history') || '[]').filter(function (x) { return x.title !== item.title; });
-      list.unshift(item); localStorage.setItem('image-maker-history', JSON.stringify(list.slice(0, 5))); renderHistory();
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem('image-maker-history') || '[]'); } catch (e) { list = []; }
+      list = list.filter(function (x) { return x.title !== item.title; });
+      list.unshift(item);
+      try { localStorage.setItem('image-maker-history', JSON.stringify(list.slice(0, 5))); } catch (e) {}
+      renderHistory();
     }
     function renderHistory() {
-      var list = JSON.parse(localStorage.getItem('image-maker-history') || '[]');
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem('image-maker-history') || '[]'); } catch (e) { list = []; }
       $('history').innerHTML = list.length ? '<label>生成履歴</label>' + list.map(function (item, i) { return '<button type="button" data-history="' + i + '">' + item.title + '</button>'; }).join('') : '';
     }
     function generate() {
       $('status').className = 'status loading';
       $('status').textContent = '画像レイアウトを作成中...';
       setTimeout(function () {
-        $('previews').innerHTML = '';
-        for (var i = 0; i < 3; i++) {
-          var wrap = document.createElement('div');
-          wrap.className = 'preview-card';
-          wrap.innerHTML = '<canvas></canvas><div class="preview-actions"><button class="btn-outline" type="button" data-save="' + i + '">PNG保存</button><button class="btn-outline" type="button" data-redraw="' + i + '">この案を再描画</button></div>';
-          $('previews').appendChild(wrap);
-          drawCanvas(wrap.querySelector('canvas'), seed + i);
+        try {
+          $('previews').innerHTML = '';
+          for (var i = 0; i < 3; i++) {
+            var wrap = document.createElement('div');
+            wrap.className = 'preview-card';
+            wrap.innerHTML = '<img class="preview-shot" alt="生成画像プレビュー"><canvas class="canvas-source"></canvas><div class="preview-actions"><button class="btn-outline" type="button" data-save="' + i + '">PNG保存</button><button class="btn-outline" type="button" data-redraw="' + i + '">この案を再描画</button></div>';
+            $('previews').appendChild(wrap);
+            var canvas = wrap.querySelector('canvas');
+            drawCanvas(canvas, seed + i);
+            wrap.querySelector('img').src = canvas.toDataURL('image/png');
+          }
+          makeScores();
+          saveHistory();
+        } catch (e) {
+          $('status').className = 'status warn';
+          $('status').textContent = '画像を作成できませんでした: ' + e.message;
         }
-        makeScores(); saveHistory();
       }, 480);
     }
     document.addEventListener('click', function (e) {
       var save = e.target.closest('[data-save]');
       if (save) {
         var canvas = save.closest('.preview-card').querySelector('canvas');
+        var img = save.closest('.preview-card').querySelector('img');
         var a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
+        a.href = img && img.src ? img.src : canvas.toDataURL('image/png');
         a.download = safeName(val('title')) + '.png';
         a.click();
       }
       var redraw = e.target.closest('[data-redraw]');
-      if (redraw) drawCanvas(redraw.closest('.preview-card').querySelector('canvas'), ++seed);
+      if (redraw) {
+        try {
+          var card = redraw.closest('.preview-card');
+          var canvas = card.querySelector('canvas');
+          drawCanvas(canvas, ++seed);
+          card.querySelector('img').src = canvas.toDataURL('image/png');
+          $('status').className = 'status';
+          $('status').textContent = 'この案を再描画しました。';
+        } catch (e) {
+          $('status').className = 'status warn';
+          $('status').textContent = '再描画できませんでした: ' + e.message;
+        }
+      }
       var chip = e.target.closest('[data-mood]');
       if (chip) { $('mood').value = chip.getAttribute('data-mood'); generate(); }
       var hist = e.target.closest('[data-history]');
       if (hist) {
-        var item = JSON.parse(localStorage.getItem('image-maker-history') || '[]')[Number(hist.getAttribute('data-history'))];
+        var list = [];
+        try { list = JSON.parse(localStorage.getItem('image-maker-history') || '[]'); } catch (e) { list = []; }
+        var item = list[Number(hist.getAttribute('data-history'))];
         if (item) { ['title','subtitle','keyword','mood','palette','size'].forEach(function (id) { $(id).value = item[id] || $(id).value; }); generate(); }
       }
     });
@@ -293,6 +355,7 @@
     });
     ['title','subtitle','keyword','useType','mood','size','palette','icon'].forEach(function (id) { $(id).addEventListener('change', generate); });
     renderHistory();
+    generate();
   })();
 </script>
 </body>
