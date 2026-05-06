@@ -501,15 +501,19 @@
 
   function timerGame() {
     const target = 3 + rand(5);
-    const startT = performance.now();
     state(target + '.00秒で止める');
-    buttons(['STOP'], () => {
-      const t = (performance.now() - startT) / 1000;
-      const d = Math.abs(t - target);
-      setScore(score + Math.max(0, 100 - Math.floor(d * 100)));
-      round++;
-      msg(t.toFixed(2) + '秒');
-      if (round < (cfg.options.rounds || 6)) later(timerGame, 650);
+    msg('STARTを押すと計測開始');
+    buttons(['START'], () => {
+      const startT = performance.now();
+      msg('計測中...');
+      buttons(['STOP'], () => {
+        const t = (performance.now() - startT) / 1000;
+        const d = Math.abs(t - target);
+        setScore(score + Math.max(0, 100 - Math.floor(d * 100)));
+        round++;
+        msg(t.toFixed(2) + '秒');
+        if (round < (cfg.options.rounds || 6)) later(timerGame, 650);
+      });
     });
   }
 

@@ -1,7 +1,7 @@
 (function () {
   const cfg = window.CLASSIC_GAME || {};
   const $ = (id) => document.getElementById(id);
-  const state = { board: [], turn: 'black', selected: null, legal: [], hand: { black: {}, white: {} }, passCount: 0, message: '' };
+  const state = { board: [], turn: 'black', selected: null, legal: [], hand: { black: {}, white: {} }, passCount: 0, message: '', npcThinking: false, ended: false };
   const jpTurn = { black: '黒', white: '白' };
   const other = (c) => c === 'black' ? 'white' : 'black';
   const inb = (r, c, n) => r >= 0 && c >= 0 && r < n && c < n;
@@ -16,12 +16,13 @@
   }
 
   function start() {
-    state.turn = 'black'; state.selected = null; state.legal = []; state.hand = { black: {}, white: {} }; state.passCount = 0; state.message = '';
+    state.turn = 'black'; state.selected = null; state.legal = []; state.hand = { black: {}, white: {} }; state.passCount = 0; state.message = ''; state.npcThinking = false; state.ended = false;
     if (cfg.type === 'reversi') setupReversi();
     if (cfg.type === 'go') setupEmpty(9);
     if (cfg.type === 'chess') setupChess();
     if (cfg.type === 'shogi') setupShogi();
     render();
+    queueNpc();
   }
 
   function setupEmpty(n) { state.board = Array.from({ length: n }, () => Array(n).fill(null)); }
@@ -105,6 +106,7 @@
   }
 
   function clickCell(r, c) {
+    if (state.ended || isNpcTurn()) return;
     if (cfg.type === 'reversi') return moveReversi(r, c);
     if (cfg.type === 'go') return moveGo(r, c);
     if (cfg.type === 'chess') return clickPieceGame(r, c, chessMoves);
@@ -112,13 +114,14 @@
   }
 
   function clickPieceGame(r, c, moveFn) {
+    if (state.ended || isNpcTurn()) return;
     const p = state.board[r][c];
     if (state.selected) {
       const ok = state.legal.find(x => x.r === r && x.c === c);
       if (ok) {
         movePiece(state.selected.r, state.selected.c, r, c);
         state.selected = null; state.legal = []; state.turn = other(state.turn);
-        render(); return;
+        render(); queueNpc(); return;
       }
     }
     if (p && p.c === state.turn) {
@@ -137,11 +140,19 @@
     if (cfg.type === 'chess' && p.t === 'p' && (tr === 0 || tr === 7)) p.t = 'q';
     if (cfg.type === 'shogi') maybePromote(p, sr, tr);
     state.message = captured && captured.t === 'k' ? `${jpTurn[p.c]}の勝ち` : '';
-    if (cfg.type === 'shogi' && captured && captured.t === 'K') state.message = `${jpTurn[p.c]}の勝ち`;
+    if (cfg.type === 'shogi' && captured && captured.t === 'K') {
+      state.message = `${jpTurn[p.c]}の勝ち`;
+      state.ended = true;
+    }
   }
 
   function addHand(color, type) {
+    type = unpromoted(type);
     state.hand[color][type] = (state.hand[color][type] || 0) + 1;
+  }
+
+  function unpromoted(type) {
+    return ({ 'と': 'P', '成香': 'L', '成桂': 'N', '成銀': 'S', '馬': 'B', '龍': 'R' }[type]) || type;
   }
 
   function renderHand(color) {
@@ -161,7 +172,7 @@
   }
 
   function selectDrop(color, type) {
-    if (color !== state.turn) return;
+    if (color !== state.turn || isNpcTurn()) return;
     state.selected = { drop: type };
     state.legal = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
@@ -173,7 +184,7 @@
         const r = Number(cell.dataset.r), c = Number(cell.dataset.c);
         if (!state.legal.find(x => x.r === r && x.c === c)) return;
         state.board[r][c] = { c: color, t: type, p: false };
-        state.hand[color][type]--; state.selected = null; state.legal = []; state.turn = other(state.turn); render();
+        state.hand[color][type]--; state.selected = null; state.legal = []; state.turn = other(state.turn); render(); queueNpc();
       };
     });
   }
@@ -189,16 +200,19 @@
     const zone = p.c === 'black' ? (sr <= 2 || tr <= 2) : (sr >= 6 || tr >= 6);
     const must = (p.t === 'P' || p.t === 'L') && (p.c === 'black' ? tr === 0 : tr === 8) ||
       p.t === 'N' && (p.c === 'black' ? tr <= 1 : tr >= 7);
-    if (zone && (must || confirm('成りますか？'))) p.p = true;
+    if (zone && (must || isNpcTurn() || confirm('成りますか？'))) p.p = true;
   }
 
   function moveReversi(r, c) {
+    if (state.ended || isNpcTurn()) return;
     const flips = reversiFlips(r, c, state.turn);
     if (state.board[r][c] || !flips.length) { state.message = '置ける場所を選んでください。'; render(); return; }
     state.board[r][c] = state.turn; flips.forEach(([rr, cc]) => state.board[rr][cc] = state.turn);
     state.turn = other(state.turn);
     if (!hasReversiMove(state.turn)) { state.message = `${jpTurn[state.turn]}は置けないためパス`; state.turn = other(state.turn); }
+    if (!hasReversiMove('black') && !hasReversiMove('white')) state.ended = true;
     render();
+    queueNpc();
   }
 
   function reversiFlips(r, c, color) {
@@ -284,11 +298,95 @@
   }
 
   function passTurn() {
+    if (isNpcTurn()) return;
     if (cfg.type !== 'go' && cfg.type !== 'reversi') return;
     state.passCount++;
     state.turn = other(state.turn);
     state.message = state.passCount >= 2 ? '両者パス。終了です。' : 'パスしました。';
     render();
+    queueNpc();
+  }
+
+  function isNpcTurn() {
+    return cfg.npc && state.turn === 'white' && (cfg.type === 'shogi' || cfg.type === 'reversi');
+  }
+
+  function queueNpc() {
+    if (!isNpcTurn() || state.npcThinking || state.ended) return;
+    state.npcThinking = true;
+    setTimeout(() => {
+      if (cfg.type === 'reversi') npcReversi();
+      if (cfg.type === 'shogi') npcShogi();
+      state.npcThinking = false;
+      render();
+    }, 350);
+  }
+
+  function npcReversi() {
+    const moves = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const flips = reversiFlips(r, c, 'white');
+      if (flips.length) moves.push({ r, c, flips });
+    }
+    if (!moves.length) {
+      state.message = '白は置けないためパス';
+      state.turn = 'black';
+      if (!hasReversiMove('black')) state.ended = true;
+      return;
+    }
+    moves.sort((a, b) => b.flips.length - a.flips.length);
+    const m = moves[0];
+    state.board[m.r][m.c] = 'white';
+    m.flips.forEach(([rr, cc]) => state.board[rr][cc] = 'white');
+    state.turn = 'black';
+    state.message = `NPCが ${m.flips.length} 個返しました。`;
+    if (!hasReversiMove('black') && !hasReversiMove('white')) state.ended = true;
+  }
+
+  function npcShogi() {
+    const moves = allShogiMoves('white');
+    if (!moves.length) {
+      state.message = 'NPCの合法手がありません。';
+      state.ended = true;
+      return;
+    }
+    moves.sort((a, b) => moveScore(b) - moveScore(a));
+    const m = moves[0];
+    if (m.drop) {
+      state.board[m.r][m.c] = { c: 'white', t: m.drop, p: false };
+      state.hand.white[m.drop]--;
+      state.message = `NPCが${shogiGlyph({ t: m.drop, p: false })}を打ちました。`;
+    } else {
+      const p = state.board[m.sr][m.sc];
+      const captured = state.board[m.r][m.c];
+      movePiece(m.sr, m.sc, m.r, m.c);
+      state.message = captured ? `NPCが${shogiGlyph(captured)}を取りました。` : `NPCが${shogiGlyph(p)}を動かしました。`;
+    }
+    if (!state.ended) state.turn = 'black';
+  }
+
+  function allShogiMoves(color) {
+    const out = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      const p = state.board[r][c];
+      if (!p || p.c !== color) continue;
+      shogiMoves(r, c).forEach(m => out.push({ sr: r, sc: c, r: m.r, c: m.c }));
+    }
+    Object.entries(state.hand[color] || {}).forEach(([type, count]) => {
+      if (!count) return;
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+        if (!state.board[r][c] && canDrop(type, color, r)) out.push({ drop: type, r, c });
+      }
+    });
+    return out;
+  }
+
+  function moveScore(m) {
+    const value = { K: 1000, R: 80, B: 70, G: 50, S: 40, N: 30, L: 25, P: 10 };
+    if (m.drop) return 3 + Math.random();
+    const captured = state.board[m.r][m.c];
+    const forward = m.r;
+    return (captured ? (value[captured.t] || 10) : 0) + (8 - forward) * 0.2 + Math.random();
   }
 
   function scoreText() {
