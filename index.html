@@ -3,270 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>とある制御屋の備忘録 | 制御設計者が作る無料Webツール・ゲーム</title>
-  <meta name="description" content="制御設計エンジニアが作る、仕事と日常に使える無料Webツール集。タスク管理アプリ、便利ツール、無料ブラウザゲームを登録不要で公開中。">
+  <title>今日もあいネコ | 子育てとAI活用のメモ</title>
+  <meta name="description" content="AI×ネコで、あいネコ。仕事と子育てに奮闘中。子育ての日常とAI関連を中心に発信予定。">
   <link rel="canonical" href="https://toaruseigyoya.github.io/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="とある制御屋の備忘録">
-  <meta property="og:title" content="とある制御屋の備忘録 | 無料Webツール・ゲーム">
-  <meta property="og:description" content="制御設計者が作る、登録不要で使える無料Webツール、タスク管理アプリ、無料ブラウザゲームの公開サイト。">
+  <meta property="og:site_name" content="今日もあいネコ">
+  <meta property="og:title" content="今日もあいネコ">
+  <meta property="og:description" content="子育ての日常と、最近話題のAI関連を中心に発信予定。">
   <meta property="og:url" content="https://toaruseigyoya.github.io/">
-  <meta name="twitter:card" content="summary">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "とある制御屋の備忘録",
-    "url": "https://toaruseigyoya.github.io/",
-    "description": "制御設計エンジニアが作る無料Webツール、便利ツール、タスク管理アプリ、無料ブラウザゲームの公開サイト。",
-    "inLanguage": "ja"
-  }
-  </script>
+  <meta name="twitter:card" content="summary_large_image">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --indigo: #6366f1; --violet: #a855f7; --rose: #ec4899;
-      --text: #1e1b4b; --text2: #4c4980; --muted: #8b87c0;
-      --bg: #f3f4ff; --card: rgba(255,255,255,.65); --border: rgba(255,255,255,.85);
-      --shadow: rgba(99,102,241,.1);
+      --mint:#36c49f; --pink:#ff8cb3; --sky:#5fb5ff; --lemon:#ffd76a;
+      --ink:#273044; --sub:#65708a; --bg:#fff8ee; --paper:#ffffff; --line:#f0dccb;
+      --shadow:0 14px 38px rgba(85,70,50,.12);
     }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Segoe UI','Hiragino Sans','Yu Gothic UI',sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
-
-    /* ── TOP BANNER ── */
-    .top-banner { background: linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7); color: #fff; text-align: center; padding: 9px 24px; font-size: .78rem; font-weight: 600; letter-spacing: .02em; position: relative; z-index: 101; }
-    .top-banner a { color: rgba(255,255,255,.85); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.35); transition: color .15s; }
-    .top-banner a:hover { color: #fff; }
-
-    /* ── BACKGROUND ORBS ── */
-    .orb { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0; }
-    .orb-1 { width: 600px; height: 600px; background: rgba(99,102,241,.18); top: -200px; left: -150px; animation: drift 14s ease-in-out infinite; }
-    .orb-2 { width: 500px; height: 500px; background: rgba(168,85,247,.13); bottom: -100px; right: -100px; animation: drift 11s ease-in-out infinite reverse 2s; }
-    .orb-3 { width: 350px; height: 350px; background: rgba(236,72,153,.1); top: 40%; left: 45%; animation: drift 16s ease-in-out infinite 4s; }
-    @keyframes drift { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(25px,-18px) scale(1.04)} 66%{transform:translate(-15px,22px) scale(.97)} }
-
-    /* ── HEADER ── */
-    header { position: sticky; top: 0; z-index: 100; background: rgba(243,244,255,.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,.7); }
-    .header-inner { max-width: 1060px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 54px; position: relative; z-index: 1; }
-    .header-logo { font-size: .9rem; font-weight: 800; background: linear-gradient(135deg, var(--indigo), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .header-nav { display: flex; gap: 20px; }
-    .header-nav a { font-size: .8rem; font-weight: 600; color: var(--text2); text-decoration: none; transition: color .15s; }
-    .header-nav a:hover { color: var(--indigo); }
-
-    /* ── LAYOUT ── */
-    .page { max-width: 1060px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
-
-    /* ── GLASS CARD BASE ── */
-    .glass { background: var(--card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 8px 32px var(--shadow), inset 0 1px 0 rgba(255,255,255,.9); }
-
-    /* ── PROFILE CARD ── */
-    .profile { padding: 28px 24px; position: sticky; top: 74px; animation: fadeUp .5s ease both; }
-    .avatar { width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, var(--indigo), var(--violet)); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(99,102,241,.3); }
-    .avatar img { width: 118%; height: 118%; object-fit: cover; border-radius: inherit; display: block; }
-    .profile-name { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
-    .profile-handle { font-size: .75rem; color: var(--muted); margin-bottom: 12px; }
-    .profile-bio { font-size: .8rem; color: var(--text2); line-height: 1.85; margin-bottom: 0; }
-
-    /* ── RIGHT COLUMN ── */
-    .right-col { display: flex; flex-direction: column; gap: 20px; }
-
-    /* ── SECTION HEADER ── */
-    .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .sec-header h2 { font-size: .95rem; font-weight: 800; }
-    .sec-chip { font-size: .68rem; font-weight: 700; padding: 3px 10px; border-radius: 100px; background: linear-gradient(135deg, var(--indigo), var(--violet)); color: #fff; }
-
-    /* ── TOOL CARDS ── */
-    .tools-section { animation: fadeUp .5s ease .1s both; }
-    .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .tool-card { display: flex; flex-direction: column; gap: 10px; padding: 20px; text-decoration: none; color: var(--text); transition: transform .2s, box-shadow .2s, border-color .2s; }
-    .tool-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px var(--shadow), inset 0 1px 0 rgba(255,255,255,.9); border-color: rgba(99,102,241,.3); }
-    .tc-top { display: flex; align-items: center; justify-content: space-between; }
-    .tc-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    .tc-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
-    .ic-indigo { background: rgba(99,102,241,.12); }
-    .ic-violet { background: rgba(168,85,247,.12); }
-    .ic-rose   { background: rgba(236,72,153,.12); }
-    .ic-emerald{ background: rgba(16,185,129,.12); }
-    .tc-live { font-size: .65rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; background: rgba(16,185,129,.1); color: #059669; border: 1px solid rgba(16,185,129,.2); }
-    .tc-soon { font-size: .65rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; background: rgba(168,85,247,.1); color: var(--violet); border: 1px solid rgba(168,85,247,.2); }
-    .tc-title { font-size: .9rem; font-weight: 800; line-height: 1.3; }
-    .tc-desc { font-size: .77rem; color: var(--text2); line-height: 1.7; flex: 1; }
-    .tc-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(99,102,241,.08); }
-    .tc-url { font-size: .7rem; color: var(--muted); font-family: 'Consolas', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
-    .tc-open { font-size: .75rem; font-weight: 700; background: linear-gradient(135deg, var(--indigo), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: flex; align-items: center; gap: 3px; transition: gap .15s; }
-    .tool-card:hover .tc-open { gap: 6px; }
-
-    /* ── FOOTER ── */
-    footer { text-align: center; padding: 32px 24px; position: relative; z-index: 1; }
-    .footer-text { font-size: .75rem; color: var(--muted); }
-    .footer-text span { background: linear-gradient(135deg, var(--indigo), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-
-    @media (max-width: 700px) {
-      .page { grid-template-columns: 1fr; }
-      .profile { position: static; }
-      .tools-grid { grid-template-columns: 1fr; }
-      .header-nav { display: none; }
+    body { font-family:'Segoe UI','Yu Gothic UI','Hiragino Sans',sans-serif; background:linear-gradient(180deg,#fff7df,#f7fbff 58%,#fff7fb); color:var(--ink); line-height:1.7; min-height:100vh; }
+    .site-banner { max-width:1120px; margin:18px auto 0; padding:0 20px; }
+    .site-banner img { width:100%; max-height:220px; object-fit:cover; border-radius:18px; border:3px solid #fff; box-shadow:var(--shadow); display:block; }
+    .page { max-width:1120px; margin:0 auto; padding:22px 20px 70px; display:grid; grid-template-columns:310px minmax(0,1fr); gap:24px; align-items:start; }
+    .profile, .links { background:rgba(255,255,255,.86); border:1px solid rgba(255,255,255,.9); border-radius:18px; box-shadow:var(--shadow); }
+    .profile { position:sticky; top:18px; padding:24px; }
+    .avatar { width:128px; height:128px; border-radius:28px; overflow:hidden; background:#fff; border:4px solid #fff; box-shadow:0 10px 26px rgba(255,140,179,.25); margin-bottom:16px; }
+    .avatar img { width:100%; height:100%; object-fit:cover; display:block; transform:scale(1.08); }
+    .profile-name { font-size:1.35rem; font-weight:900; letter-spacing:.02em; margin-bottom:12px; }
+    .profile-bio { color:var(--sub); font-size:.92rem; line-height:1.95; }
+    .links { padding:16px; display:grid; gap:10px; }
+    .link-card { display:grid; grid-template-columns:54px minmax(0,170px) minmax(0,1fr); gap:14px; align-items:center; min-height:74px; padding:12px 14px; border-radius:14px; background:#fff; border:1px solid var(--line); color:var(--ink); text-decoration:none; transition:transform .15s, box-shadow .15s, border-color .15s; }
+    .link-card:hover { transform:translateY(-2px); border-color:rgba(54,196,159,.45); box-shadow:0 10px 24px rgba(54,196,159,.12); }
+    .link-icon { width:48px; height:48px; border-radius:15px; display:grid; place-items:center; font-size:1.45rem; font-weight:900; color:#fff; }
+    .i-tools{background:linear-gradient(135deg,var(--mint),#75dfc5)} .i-check{background:linear-gradient(135deg,#9aa6b2,#c8d0d7)}
+    .i-util{background:linear-gradient(135deg,var(--sky),#9ed2ff)} .i-task{background:linear-gradient(135deg,#7c83ff,#b5b8ff)}
+    .i-game{background:linear-gradient(135deg,var(--pink),#ffc1d6)} .i-fortune{background:linear-gradient(135deg,var(--lemon),#ffb84d)}
+    .link-title { font-size:1rem; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .link-desc { color:var(--sub); font-size:.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    footer { text-align:center; color:#8a7890; font-size:.78rem; padding:24px; }
+    @media (max-width:780px) {
+      .page { grid-template-columns:1fr; padding-inline:14px; }
+      .profile { position:static; }
+      .link-card { grid-template-columns:48px 1fr; }
+      .link-desc { grid-column:2; white-space:normal; }
     }
   </style>
 </head>
 <body>
-
-<!-- Top Banner -->
-<div class="top-banner">
-  ⚙️ 制御設計エンジニアが作る、FA・AI活用ツールと無料ゲームを公開中
-</div>
-
-<!-- Background orbs -->
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
-
-<!-- Header -->
-<header>
-  <div class="header-inner">
-    <span class="header-logo">⚙️ とある制御屋の備忘録</span>
-    <nav class="header-nav">
-      <a href="#tools">ツール</a>
-      <a href="#utilities">便利ツール</a>
-      <a href="#tasks">タスク管理</a>
-      <a href="#games">無料ゲーム</a>
-    </nav>
-  </div>
-</header>
-
-<div class="page">
-
-  <!-- ── PROFILE ── -->
-  <aside>
-    <div class="glass profile">
-      <div class="avatar"><img src="assets/images/games-icon.png" alt="あいネコ"></div>
-      <div class="profile-name">あいネコ</div>
-      <div class="profile-handle">AI×ネコ＝あいネコ</div>
-      <p class="profile-bio">AI×ネコで、あいネコ。<br>仕事と子育てに奮闘中。<br>AIで毎日をちょっとラクに。<br>4歳＆1歳に癒される日々。<br>完璧じゃなくていい。</p>
-    </div>
-  </aside>
-
-  <!-- ── RIGHT COLUMN ── -->
-  <div class="right-col">
-
-    <!-- Tools -->
-    <div class="tools-section" id="tools">
-      <div class="sec-header">
-        <h2>公開ツール</h2>
-        <span class="sec-chip">2 Tools</span>
-      </div>
-      <div class="tools-grid">
-
-        <a class="glass tool-card" href="https://toaruseigyoya.github.io/tools/" target="_blank" rel="noopener">
-          <div class="tc-top">
-            <div class="tc-icon ic-violet">🔧</div>
-            <span class="tc-live">公開中</span>
-          </div>
-          <div class="tc-title">汎用ツール集</div>
-          <div class="tc-desc">文字数カウント・Base64・パスワード生成・JSON整形・消費税計算など533件のツールを無料公開。</div>
-          <div class="tc-footer">
-            <span class="tc-url">tools/</span>
-            <span class="tc-open">開く →</span>
-          </div>
-        </a>
-
-        <a class="glass tool-card" href="https://toaruseigyoya.github.io/fortune/" target="_blank" rel="noopener">
-          <div class="tc-top">
-            <div class="tc-icon ic-rose">占</div>
-            <span class="tc-live">公開中</span>
-          </div>
-          <div class="tc-title">占いツール集</div>
-          <div class="tc-desc">今日の運勢、相性、タロット風、名前、仕事運をまとめて占える軽量ツール。</div>
-          <div class="tc-footer">
-            <span class="tc-url">fortune/</span>
-            <span class="tc-open">開く →</span>
-          </div>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- Utilities -->
-    <div class="tools-section" id="utilities">
-      <div class="sec-header">
-        <h2>便利ツール</h2>
-        <span class="sec-chip">6 Tools</span>
-      </div>
-      <div class="tools-grid">
-
-        <a class="glass tool-card" href="https://toaruseigyoya.github.io/utilities/" target="_blank" rel="noopener">
-          <div class="tc-top">
-            <div class="tc-icon ic-indigo">📄</div>
-            <span class="tc-live">公開中</span>
-          </div>
-          <div class="tc-title">便利ツール集</div>
-          <div class="tc-desc">PDF結合・分割、文字抽出、メール文面作成、SNS画像作成、名前メーカー、URL短縮を一覧で公開。</div>
-          <div class="tc-footer">
-            <span class="tc-url">utilities/</span>
-            <span class="tc-open">開く →</span>
-          </div>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- Tasks -->
-    <div class="tools-section" id="tasks">
-      <div class="sec-header">
-        <h2>タスク管理</h2>
-        <span class="sec-chip">1 App</span>
-      </div>
-      <div class="tools-grid">
-
-        <a class="glass tool-card" href="https://toaruseigyoya.github.io/tasks/" target="_blank" rel="noopener">
-          <div class="tc-top">
-            <div class="tc-icon ic-emerald">✓</div>
-            <span class="tc-live">公開中</span>
-          </div>
-          <div class="tc-title">タスク管理アプリ</div>
-          <div class="tc-desc">グループ、重要度、進捗、期限、サブ項目、色分け、ファイル取込に対応。</div>
-          <div class="tc-footer">
-            <span class="tc-url">tasks/</span>
-            <span class="tc-open">開く →</span>
-          </div>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- Games -->
-    <div class="tools-section" id="games">
-      <div class="sec-header">
-        <h2>無料ゲーム</h2>
-        <span class="sec-chip">51 Games</span>
-      </div>
-      <div class="tools-grid">
-
-        <a class="glass tool-card" href="https://toaruseigyoya.github.io/games/" target="_blank" rel="noopener">
-          <div class="tc-top">
-            <div class="tc-icon ic-rose">🎮</div>
-            <span class="tc-live">公開中</span>
-          </div>
-          <div class="tc-title">無料ゲーム</div>
-          <div class="tc-desc">ブラウザで遊べる無料ゲーム一覧。パズル・反射・記憶・推理・アクションなど51本を公開中。</div>
-          <div class="tc-footer">
-            <span class="tc-url">games/</span>
-            <span class="tc-open">開く →</span>
-          </div>
-        </a>
-
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<footer>
-  <p class="footer-text">© 2026 <span>とある制御屋の備忘録</span> — All tools are free to use.</p>
-</footer>
-
+  <div class="site-banner"><img src="assets/images/aineko-banner.png" alt="今日もあいネコ"></div>
+  <main class="page">
+    <aside class="profile">
+      <div class="avatar"><img src="assets/images/aineko-profile.png" alt="今日もあいネコ"></div>
+      <h1 class="profile-name">今日もあいネコ</h1>
+      <p class="profile-bio">AI×ネコで、あいネコ。<br>仕事と子育てに奮闘中。<br>4歳＆1歳に癒される日々。<br>子育ての日常と、最近話題のAI関連を中心に発信予定。</p>
+    </aside>
+    <section class="links" aria-label="コンテンツ一覧">
+      <a class="link-card" href="https://toaruseigyoya.github.io/tools/">
+        <span class="link-icon i-tools">🔧</span><span class="link-title">汎用ツール集</span><span class="link-desc">Word編集などの便利ツールを無料公開</span>
+      </a>
+      <a class="link-card" href="https://toaruseigyoya.github.io/tools/checking/">
+        <span class="link-icon i-check">🧪</span><span class="link-title">汎用ツール集(動作確認中)</span><span class="link-desc">旧ツール群の動作確認用ページ</span>
+      </a>
+      <a class="link-card" href="https://toaruseigyoya.github.io/utilities/">
+        <span class="link-icon i-util">📄</span><span class="link-title">便利ツール集</span><span class="link-desc">PDF・画像・文章作成などの実用ツール</span>
+      </a>
+      <a class="link-card" href="https://toaruseigyoya.github.io/tasks/">
+        <span class="link-icon i-task">✓</span><span class="link-title">タスク管理</span><span class="link-desc">グループ・期限・進捗つきタスク管理アプリ</span>
+      </a>
+      <a class="link-card" href="https://toaruseigyoya.github.io/games/">
+        <span class="link-icon i-game">🎮</span><span class="link-title">無料ゲーム</span><span class="link-desc">ブラウザで遊べるパズル・カード・ボードゲーム</span>
+      </a>
+      <a class="link-card" href="https://toaruseigyoya.github.io/fortune/">
+        <span class="link-icon i-fortune">占</span><span class="link-title">占い</span><span class="link-desc">今日の運勢や相性を気軽にチェック</span>
+      </a>
+    </section>
+  </main>
+  <footer>© 2026 今日もあいネコ</footer>
 </body>
 </html>
