@@ -148,6 +148,12 @@
       border-color: transparent;
       box-shadow: 0 8px 20px rgba(37,99,235,.18);
     }
+    .workspace-manager {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      gap: 7px;
+      margin: -4px 0 12px;
+    }
     h2 { margin: 0; font-size: 1rem; }
     .count {
       padding: 0;
@@ -579,6 +585,12 @@
     <div class="app">
       <section class="panel input-panel">
         <div class="workspace-tabs" id="workspaceTabs" aria-label="タスク管理タブ"></div>
+        <div class="workspace-manager" aria-label="タブ設定">
+          <input class="field" id="workspaceNameInput" type="text" placeholder="タブ名">
+          <button class="subtle" id="addWorkspaceButton" type="button">追加</button>
+          <button class="subtle" id="renameWorkspaceButton" type="button">名称変更</button>
+          <button class="danger" id="deleteWorkspaceButton" type="button">削除</button>
+        </div>
         <div class="panel-head">
           <h2>入力</h2>
         </div>
@@ -614,8 +626,6 @@
         <div id="taskList" class="task-list" aria-live="polite"></div>
         <div class="list-actions">
           <button class="subtle" id="groupSettingsButton" type="button">グループ順序設定</button>
-          <button class="subtle" id="exportJsonButton" type="button">JSON保存</button>
-          <button class="subtle" id="exportCsvButton" type="button">CSV保存</button>
           <button class="danger" id="deleteButton" type="button" disabled title="選択中のタスクを削除します。">選択を削除</button>
           <button class="subtle" id="clearDoneButton" type="button" title="完了済みのタスクをまとめて削除します。">完了を削除</button>
         </div>
@@ -655,6 +665,10 @@
       var input = document.getElementById('taskInput');
       var taskButton = document.getElementById('taskButton');
       var workspaceTabs = document.getElementById('workspaceTabs');
+      var workspaceNameInput = document.getElementById('workspaceNameInput');
+      var addWorkspaceButton = document.getElementById('addWorkspaceButton');
+      var renameWorkspaceButton = document.getElementById('renameWorkspaceButton');
+      var deleteWorkspaceButton = document.getElementById('deleteWorkspaceButton');
       var newTaskGroup = document.getElementById('newTaskGroup');
       var newGroupName = document.getElementById('newGroupName');
       var createGroupButton = document.getElementById('createGroupButton');
@@ -669,14 +683,13 @@
       var groupSettingsList = document.getElementById('groupSettingsList');
       var deleteButton = document.getElementById('deleteButton');
       var clearDoneButton = document.getElementById('clearDoneButton');
-      var exportJsonButton = document.getElementById('exportJsonButton');
-      var exportCsvButton = document.getElementById('exportCsvButton');
       var toast = document.getElementById('toast');
       var storageKey = 'toaruseigyoya-task-app';
       var groupOrderKey = 'toaruseigyoya-task-groups';
       var hiddenGroupsKey = 'toaruseigyoya-task-hidden-groups';
       var workspaceKey = 'toaruseigyoya-task-workspace';
-      var workspaces = ['業務', '個人的'];
+      var workspaceListKey = 'toaruseigyoya-task-workspaces';
+      var workspaces = loadWorkspaces();
       var activeWorkspace = localStorage.getItem(workspaceKey) || workspaces[0];
       var colors = ['#2563eb', '#0891b2', '#16a34a', '#f59e0b', '#e11d48', '#7c3aed', '#475569', '#db2777', '#ea580c', '#0f766e'];
       var selectedId = null;
@@ -684,6 +697,39 @@
       var tasks = load();
       var groupOrder = loadGroupOrder();
       var hiddenGroups = loadHiddenGroups();
+      syncWorkspaces();
+
+      function normalizeWorkspaceName(name) {
+        return (name || '').trim().replace(/\s+/g, ' ') || '';
+      }
+
+      function loadWorkspaces() {
+        try {
+          var saved = JSON.parse(localStorage.getItem(workspaceListKey) || '[]');
+          if (Array.isArray(saved)) {
+            saved = saved.map(normalizeWorkspaceName).filter(Boolean);
+            saved = saved.filter(function (name, index) { return saved.indexOf(name) === index; });
+            if (saved.length) return saved;
+          }
+        } catch (e) {}
+        return ['業務', '個人的'];
+      }
+
+      function saveWorkspaces() {
+        localStorage.setItem(workspaceListKey, JSON.stringify(workspaces));
+      }
+
+      function syncWorkspaces() {
+        tasks.forEach(function (task) {
+          var name = normalizeWorkspaceName(task.workspace) || workspaces[0];
+          task.workspace = name;
+          if (!workspaces.includes(name)) workspaces.push(name);
+        });
+        if (!workspaces.length) workspaces = ['タスク'];
+        if (!workspaces.includes(activeWorkspace)) activeWorkspace = workspaces[0];
+        localStorage.setItem(workspaceKey, activeWorkspace);
+        saveWorkspaces();
+      }
 
       function load() {
         try {
@@ -817,50 +863,6 @@
         newTaskGroup.value = ensureGroup(kind === 'work' ? '業務' : '個人');
         input.value = samples.join('\n');
         addTask();
-      }
-
-      function downloadText(filename, text, type) {
-        var blob = new Blob([text], { type: type || 'text/plain;charset=utf-8' });
-        var link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
-      }
-
-      function csvCell(value) {
-        var text = String(value == null ? '' : value);
-        return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-      }
-
-      function exportJson() {
-        if (!workspaceTasks().length) {
-          show('保存するタスクはありません。');
-          return;
-        }
-        downloadText('tasks-backup.json', JSON.stringify(workspaceTasks(), null, 2), 'application/json;charset=utf-8');
-      }
-
-      function exportCsv() {
-        if (!workspaceTasks().length) {
-          show('保存するタスクはありません。');
-          return;
-        }
-        var rows = [['タブ', 'タスク', '完了', 'グループ', '重要度', '進捗', '期限', '備考', 'サブ項目']];
-        workspaceTasks().forEach(function (task) {
-          rows.push([
-            task.workspace || workspaces[0],
-            task.text,
-            task.done ? '完了' : '未完了',
-            taskGroup(task),
-            task.priority || '中',
-            task.progress || '未着手',
-            task.due || '',
-            task.note || '',
-            (task.items || []).map(function (item) { return (item.done ? '[x] ' : '[ ] ') + item.text; }).join(' / ')
-          ]);
-        });
-        downloadText('tasks-backup.csv', rows.map(function (row) { return row.map(csvCell).join(','); }).join('\n'), 'text/csv;charset=utf-8');
       }
 
       function makeId() {
@@ -1015,11 +1017,94 @@
       }
 
       function switchWorkspace(name) {
+        if (!workspaces.includes(name)) return;
         activeWorkspace = name;
         localStorage.setItem(workspaceKey, activeWorkspace);
         selectedId = null;
         selectedDisplayGroup = null;
         syncGroupOrder();
+        render();
+      }
+
+      function addWorkspace() {
+        var name = normalizeWorkspaceName(workspaceNameInput.value);
+        if (!name) {
+          show('追加するタブ名を入力してください。');
+          workspaceNameInput.focus();
+          return;
+        }
+        if (workspaces.includes(name)) {
+          show('同じ名前のタブが既にあります。');
+          return;
+        }
+        workspaces.push(name);
+        activeWorkspace = name;
+        workspaceNameInput.value = '';
+        saveWorkspaces();
+        localStorage.setItem(workspaceKey, activeWorkspace);
+        ensureGroup('未分類');
+        show('タブ「' + name + '」を追加しました。');
+        render();
+      }
+
+      function renameWorkspace() {
+        var nextName = normalizeWorkspaceName(workspaceNameInput.value);
+        var currentName = activeWorkspace;
+        if (!nextName) {
+          show('変更後のタブ名を入力してください。');
+          workspaceNameInput.focus();
+          return;
+        }
+        if (nextName === currentName) return;
+        if (workspaces.includes(nextName)) {
+          show('同じ名前のタブが既にあります。');
+          return;
+        }
+        workspaces = workspaces.map(function (name) { return name === currentName ? nextName : name; });
+        tasks = tasks.map(function (task) {
+          return (task.workspace || workspaces[0]) === currentName ? Object.assign({}, task, { workspace: nextName }) : task;
+        });
+        if (groupOrder[currentName]) {
+          groupOrder[nextName] = groupOrder[currentName];
+          delete groupOrder[currentName];
+        }
+        if (hiddenGroups[currentName]) {
+          hiddenGroups[nextName] = hiddenGroups[currentName];
+          delete hiddenGroups[currentName];
+        }
+        activeWorkspace = nextName;
+        workspaceNameInput.value = '';
+        saveWorkspaces();
+        save();
+        saveGroupOrder();
+        saveHiddenGroups();
+        localStorage.setItem(workspaceKey, activeWorkspace);
+        show('タブ名を「' + nextName + '」に変更しました。');
+        render();
+      }
+
+      function deleteWorkspace() {
+        if (workspaces.length <= 1) {
+          show('タブは最低1つ必要です。');
+          return;
+        }
+        var currentName = activeWorkspace;
+        var targetTasks = workspaceTasks().length;
+        if (!confirm('タブ「' + currentName + '」を削除します。' + (targetTasks ? 'このタブ内のタスクも削除されます。' : '') + 'よろしいですか')) return;
+        workspaces = workspaces.filter(function (name) { return name !== currentName; });
+        tasks = tasks.filter(function (task) { return (task.workspace || currentName) !== currentName; });
+        delete groupOrder[currentName];
+        delete hiddenGroups[currentName];
+        activeWorkspace = workspaces[0];
+        selectedId = null;
+        selectedDisplayGroup = null;
+        workspaceNameInput.value = '';
+        saveWorkspaces();
+        save();
+        saveGroupOrder();
+        saveHiddenGroups();
+        localStorage.setItem(workspaceKey, activeWorkspace);
+        show('タブ「' + currentName + '」を削除しました。');
         render();
       }
 
@@ -1249,6 +1334,7 @@
 
       function renderWorkspaceTabs() {
         workspaceTabs.innerHTML = '';
+        syncWorkspaces();
         workspaces.forEach(function (name) {
           var button = document.createElement('button');
           button.type = 'button';
@@ -1257,6 +1343,8 @@
           button.addEventListener('click', function () { switchWorkspace(name); });
           workspaceTabs.appendChild(button);
         });
+        if (document.activeElement !== workspaceNameInput) workspaceNameInput.value = activeWorkspace;
+        deleteWorkspaceButton.disabled = workspaces.length <= 1;
       }
 
       function renderNewTaskGroups() {
@@ -1544,6 +1632,16 @@
       }
 
       taskButton.addEventListener('click', addTask);
+      addWorkspaceButton.addEventListener('click', addWorkspace);
+      renameWorkspaceButton.addEventListener('click', renameWorkspace);
+      deleteWorkspaceButton.addEventListener('click', deleteWorkspace);
+      workspaceNameInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          if (workspaces.includes(normalizeWorkspaceName(workspaceNameInput.value))) switchWorkspace(normalizeWorkspaceName(workspaceNameInput.value));
+          else addWorkspace();
+        }
+      });
       createGroupButton.addEventListener('click', createGroup);
       newGroupName.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
@@ -1579,8 +1677,6 @@
       });
       deleteButton.addEventListener('click', deleteSelected);
       clearDoneButton.addEventListener('click', clearDone);
-      exportJsonButton.addEventListener('click', exportJson);
-      exportCsvButton.addEventListener('click', exportCsv);
       input.addEventListener('keydown', function (event) {
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') addTask();
       });
