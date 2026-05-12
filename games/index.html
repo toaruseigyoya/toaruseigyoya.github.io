@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無料ゲーム | とある制御屋の備忘録</title>
-  <meta name="description" content="ブラウザで遊べる無料ゲーム一覧。パズル、反射、記憶、推理、アクションなど48本の無料ゲームを登録不要で公開しています。">
+  <title>無料ゲーム | 今日もあいネコ</title>
+  <meta name="description" content="作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。今後、遊びやすいものから順に整理していきます。">
   <link rel="canonical" href="https://toaruseigyoya.github.io/games/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="とある制御屋の備忘録">
-  <meta property="og:title" content="無料ゲーム | 登録不要のブラウザゲーム一覧">
-  <meta property="og:description" content="パズル、反射、記憶、推理、アクションなど48本の無料ブラウザゲームを公開中。">
+  <meta property="og:site_name" content="今日もあいネコ">
+  <meta property="og:title" content="無料ゲーム | 今日もあいネコ">
+  <meta property="og:description" content="作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。">
   <meta property="og:url" content="https://toaruseigyoya.github.io/games/">
   <meta name="twitter:card" content="summary">
   <script type="application/ld+json">
@@ -18,11 +18,11 @@
     "@type": "CollectionPage",
     "name": "無料ゲーム",
     "url": "https://toaruseigyoya.github.io/games/",
-    "description": "登録不要で遊べる無料ブラウザゲーム一覧。",
+      "description": "作業や家事の合間に、短時間で遊べる軽いブラウザゲーム一覧。",
     "inLanguage": "ja",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "とある制御屋の備忘録",
+      "name": "今日もあいネコ",
       "url": "https://toaruseigyoya.github.io/"
     }
   }
@@ -73,7 +73,9 @@
     .game-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(99,102,241,.09); }
     .url { color: var(--muted); font-family: Consolas, monospace; font-size: .72rem; }
     .open { font-size: .78rem; font-weight: 800; background: linear-gradient(135deg, var(--indigo), var(--rose)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    footer { text-align: center; padding: 32px 24px; position: relative; z-index: 1; color: var(--muted); font-size: .75rem; }
+    footer { text-align: center; padding: 32px 24px; position: relative; z-index: 1; color: var(--muted); font-size: .9rem; }
+    .footer-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+    .footer-links a { display:inline-flex; align-items:center; min-height:42px; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.72); border:1px solid var(--border); color:var(--text2); text-decoration:none; font-size:.9rem; font-weight:850; }
     @media (max-width: 700px) {
       .header-nav { display: none; }
       main { padding-top: 28px; }
@@ -85,15 +87,15 @@
   <script defer src="/assets/share-buttons.js"></script>
 </head>
 <body>
-  <div class="top-banner">無料で遊べるブラウザゲームを公開中</div>
+  <div class="top-banner">作業や家事の合間に遊べる軽いブラウザゲーム</div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <header>
     <div class="header-inner">
-      <span class="header-logo">とある制御屋の備忘録</span>
+      <span class="header-logo">今日もあいネコ</span>
       <nav class="header-nav">
         <a href="../">ホーム</a>
-        <a href="../tools/">汎用ツール集</a>
+        <a href="../tools/">公開ツール一覧</a>
       </nav>
     </div>
   </header>
@@ -101,7 +103,7 @@
     <div class="page-head">
       <a class="crumb" href="../">← ホームへ戻る</a>
       <h1>無料ゲーム</h1>
-      <p class="lead">登録不要でそのまま遊べるブラウザゲームです。今後追加するゲームもこのページにまとめます。</p>
+      <p class="lead">作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。今後、遊びやすいものから順に整理していきます。</p>
     </div>
     <section>
       <div class="section-head">
@@ -626,7 +628,14 @@
       </div>
     </section>
   </main>
-  <footer>© 2026 とある制御屋の備忘録</footer>
+  <footer>
+    <nav class="footer-links" aria-label="サイト情報">
+      <a href="../contact/">お問い合わせ</a>
+      <a href="../privacy/">プライバシーポリシー</a>
+      <a href="../disclaimer/">免責事項</a>
+    </nav>
+    © 2026 今日もあいネコ
+  </footer>
   <script>
     (function () {
       var cards = Array.from(document.querySelectorAll('.game-card'));
