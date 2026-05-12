@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公開ツール一覧 | 今日もあいネコ</title>
+  <meta name="description" content="今日もあいネコで公開中・開発中の便利ツール一覧。OCR、PDF関連、メール文面自動作成、工程管理アプリなどを整理しています。">
+  <link rel="canonical" href="https://toaruseigyoya.github.io/tools/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="今日もあいネコ">
+  <meta property="og:title" content="公開ツール一覧 | 今日もあいネコ">
+  <meta property="og:description" content="OCR、PDF関連、メール文面自動作成、工程管理アプリなどの公開状況をまとめています。">
+  <meta property="og:url" content="https://toaruseigyoya.github.io/tools/">
+  <meta property="og:image" content="https://toaruseigyoya.github.io/assets/images/aineko-banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --mint:#36c49f; --sky:#5fb5ff; --pink:#ff8cb3; --ink:#273044; --sub:#65708a; --line:#f0dccb; --shadow:0 14px 38px rgba(85,70,50,.12); }
+    body { font-family:'Segoe UI','Yu Gothic UI','Hiragino Sans',sans-serif; background:linear-gradient(180deg,#fff7df,#f7fbff 58%,#fff7fb); color:var(--ink); line-height:1.75; min-height:100vh; }
+    .site-banner { max-width:1120px; margin:18px auto 0; padding:0 20px; }
+    .site-banner img { width:100%; max-height:300px; object-fit:contain; background:#fff; border-radius:18px; border:3px solid #fff; box-shadow:var(--shadow); display:block; }
+    main { max-width:1040px; margin:0 auto; padding:24px 20px 70px; }
+    .crumb { display:inline-flex; min-height:40px; align-items:center; color:#0f7f68; font-size:.9rem; font-weight:900; text-decoration:none; margin-bottom:14px; }
+    .hero, .section { background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.9); border-radius:18px; box-shadow:var(--shadow); padding:22px; margin-bottom:16px; }
+    h1 { font-size:clamp(1.8rem,5vw,2.8rem); line-height:1.2; letter-spacing:0; margin-bottom:10px; }
+    .lead { color:var(--sub); max-width:720px; font-size:1rem; }
+    .tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:14px; }
+    .tool-card { display:flex; flex-direction:column; gap:10px; min-height:180px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); text-decoration:none; }
+    .tool-card h2 { font-size:1.05rem; line-height:1.4; }
+    .tool-card p { color:var(--sub); font-size:.9rem; flex:1; }
+    .status { align-self:flex-start; border-radius:999px; padding:4px 10px; font-size:.78rem; font-weight:900; }
+    .live { background:#eaf8f3; color:#0f7f68; border:1px solid #c8efe3; }
+    .dev { background:#fff7d6; color:#8a6a12; border:1px solid #f3d982; }
+    .checking { background:#edf4ff; color:#315f9a; border:1px solid #cfe0f7; }
+    .open { color:#0f7f68; font-weight:900; font-size:.88rem; }
+    footer { text-align:center; color:#8a7890; font-size:.9rem; padding:24px; }
+    @media (max-width:700px) { .site-banner, main { padding-inline:14px; } .hero, .section { padding:18px; } }
+  </style>
+  <script defer src="/assets/share-buttons.js"></script>
+</head>
+<body>
+  <div class="site-banner"><img src="/assets/images/aineko-banner.png" alt="今日もあいネコ"></div>
+  <main>
+    <a class="crumb" href="/">← ホームへ戻る</a>
+    <section class="hero">
+      <h1>公開ツール一覧</h1>
+      <p class="lead">公開中・開発中のツールをまとめるページです。状態ラベルを付けて、あとからツールカードやリンクを増やせるようにしています。</p>
+    </section>
+    <section class="section">
+      <div class="tool-grid">
+        <a class="tool-card" href="/utilities/text-extract/">
+          <span class="status live">公開中</span>
+          <h2>OCRツール</h2>
+          <p>画像やPDFから文字を取り出すための文字抽出ツールです。</p>
+          <span class="open">開く</span>
+        </a>
+        <a class="tool-card" href="/utilities/pdf/">
+          <span class="status live">公開中</span>
+          <h2>PDF関連ツール</h2>
+          <p>PDFの分割・結合など、日常作業で使う処理をまとめます。</p>
+          <span class="open">開く</span>
+        </a>
+        <a class="tool-card" href="/utilities/mail-generator/">
+          <span class="status live">公開中</span>
+          <h2>メール文面自動作成</h2>
+          <p>用途に合わせてメール文面のたたき台を作るツールです。</p>
+          <span class="open">開く</span>
+        </a>
+        <article class="tool-card">
+          <span class="status dev">開発中</span>
+          <h2>工程管理アプリ</h2>
+          <p>仕事や作業の工程を見える化するアプリとして準備中です。</p>
+          <span class="open">準備中</span>
+        </article>
+        <a class="tool-card" href="/utilities/">
+          <span class="status live">公開中</span>
+          <h2>その他便利ツール</h2>
+          <p>画像作成、名前作成、URL短縮などの小さな便利ツールです。</p>
+          <span class="open">開く</span>
+        </a>
+      </div>
+    </section>
+    <section class="section" id="checking">
+      <h2>汎用ツール集 動作確認中</h2>
+      <div class="tool-grid">
+        <article class="tool-card">
+          <span class="status checking">確認中</span>
+          <h2>公開前ツール置き場</h2>
+          <p>動作確認中のツールや、公開前に整理しているツールをここへ追加します。</p>
+          <span class="open">追加予定</span>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer>© 2026 今日もあいネコ</footer>
+</body>
+</html>
