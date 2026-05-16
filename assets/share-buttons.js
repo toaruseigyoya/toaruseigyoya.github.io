@@ -12,6 +12,7 @@
   };
 
   var prText = '\u3053\u306e\u30b5\u30a4\u30c8\u306b\u306f\u5e83\u544a\u30fb\u30a2\u30d5\u30a3\u30ea\u30a8\u30a4\u30c8\u30ea\u30f3\u30af\u3092\u542b\u3080\u5834\u5408\u304c\u3042\u308a\u307e\u3059\u3002';
+  var commentsKeyPrefix = 'aineko_comments:';
 
   var analytics = {
     cloudflareToken: '36c9e0653d3a4c43b0193186cc1c1234',
@@ -125,8 +126,26 @@
       '.global-pr-notice,.pr-notice{max-width:1040px;margin:18px auto 0;padding:0 18px;color:#8a7890!important;font-size:.9rem!important;font-weight:600!important;line-height:1.8!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;display:block!important}',
       '.global-pr-notice span,.pr-notice span{color:inherit!important;font:inherit!important;background:transparent!important;border:0!important;min-width:0!important;min-height:0!important;padding:0!important;border-radius:0!important}',
       '.global-pr-label,.pr-label{font-weight:800!important;margin-right:.45em!important}',
+      '.site-comments{max-width:920px;margin:34px auto 18px;padding:0 18px;color:#273044;font-family:"Segoe UI","Yu Gothic UI","Hiragino Sans",sans-serif}',
+      '.site-comments-inner{background:rgba(255,255,255,.92);border:1px solid #f0dccb;border-radius:14px;box-shadow:0 12px 30px rgba(85,70,50,.08);padding:18px}',
+      '.site-comments h2{font-size:1.18rem;line-height:1.4;margin:0 0 12px;color:#273044;border:0;padding:0}',
+      '.comment-list{display:grid;gap:10px;margin:0 0 18px}',
+      '.comment-item{border-top:1px solid #eef2f7;padding-top:12px}',
+      '.comment-item:first-child{border-top:0;padding-top:0}',
+      '.comment-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;margin-bottom:5px}',
+      '.comment-author{font-weight:900;color:#273044}',
+      '.comment-date{font-size:.78rem;color:#8a7890;font-weight:800}',
+      '.comment-body{white-space:pre-wrap;color:#4f5b73;line-height:1.75;font-size:.95rem}',
+      '.comment-empty{color:#8a7890;font-size:.92rem;line-height:1.7;margin:0 0 18px}',
+      '.comment-form{display:grid;gap:10px;border-top:1px solid #eef2f7;padding-top:14px}',
+      '.comment-form-title{font-weight:900;color:#273044;font-size:1rem}',
+      '.comment-form label{display:grid;gap:5px;color:#4f5b73;font-size:.82rem;font-weight:900}',
+      '.comment-form input,.comment-form textarea{width:100%;border:1.5px solid #dbe8f6;border-radius:10px;background:#fff;color:#273044;font:inherit;padding:10px 11px}',
+      '.comment-form textarea{min-height:132px;resize:vertical}',
+      '.comment-form button{justify-self:start;border:0;border-radius:10px;background:#0f7f68;color:#fff;font:inherit;font-weight:900;padding:10px 14px;cursor:pointer}',
+      '.comment-note{color:#8a7890;font-size:.82rem;line-height:1.7;margin:0}',
       '@media(max-width:760px){.share-title-row{display:block}.share-title-row .share-buttons-top{justify-content:flex-start;margin:10px 0 14px}}',
-      '@media(max-width:560px){.share-buttons{gap:7px}.share-btn{width:34px;height:34px}.share-btn svg{width:17px;height:17px}}'
+      '@media(max-width:560px){.share-buttons{gap:7px}.share-btn{width:34px;height:34px}.share-btn svg{width:17px;height:17px}.site-comments{padding-inline:14px}.site-comments-inner{padding:16px}}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -265,11 +284,140 @@
     document.head.appendChild(script);
   }
 
+  function commentsStorageKey() {
+    return commentsKeyPrefix + location.pathname.replace(/\/$/, '') + location.search;
+  }
+
+  function loadComments() {
+    try {
+      var raw = localStorage.getItem(commentsStorageKey());
+      var comments = raw ? JSON.parse(raw) : [];
+      return Array.isArray(comments) ? comments : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveComments(comments) {
+    try {
+      localStorage.setItem(commentsStorageKey(), JSON.stringify(comments));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function formatDate(value) {
+    try {
+      return new Intl.DateTimeFormat('ja-JP', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(value));
+    } catch (error) {
+      return value;
+    }
+  }
+
+  function renderComments(list, comments) {
+    list.innerHTML = '';
+    if (!comments.length) {
+      var empty = document.createElement('p');
+      empty.className = 'comment-empty';
+      empty.textContent = '\u307e\u3060\u30b3\u30e1\u30f3\u30c8\u306f\u3042\u308a\u307e\u305b\u3093\u3002';
+      list.appendChild(empty);
+      return;
+    }
+
+    comments.forEach(function (comment) {
+      var item = document.createElement('article');
+      item.className = 'comment-item';
+
+      var meta = document.createElement('div');
+      meta.className = 'comment-meta';
+
+      var author = document.createElement('span');
+      author.className = 'comment-author';
+      author.textContent = comment.name || '\u540d\u524d\u306a\u3057';
+
+      var date = document.createElement('time');
+      date.className = 'comment-date';
+      date.dateTime = comment.date;
+      date.textContent = formatDate(comment.date);
+
+      var body = document.createElement('p');
+      body.className = 'comment-body';
+      body.textContent = comment.body || '';
+
+      meta.appendChild(author);
+      meta.appendChild(date);
+      item.appendChild(meta);
+      item.appendChild(body);
+      list.appendChild(item);
+    });
+  }
+
+  function initComments() {
+    if (document.querySelector('.site-comments')) return;
+    injectStyle();
+
+    var main = document.querySelector('main') || document.body;
+    var comments = document.createElement('section');
+    comments.className = 'site-comments';
+    comments.id = 'comments';
+    comments.setAttribute('aria-label', '\u30b3\u30e1\u30f3\u30c8\u6b04');
+    comments.innerHTML =
+      '<div class="site-comments-inner">' +
+        '<h2>\u30b3\u30e1\u30f3\u30c8</h2>' +
+        '<div class="comment-list" aria-live="polite"></div>' +
+        '<form class="comment-form">' +
+          '<div class="comment-form-title">\u30b3\u30e1\u30f3\u30c8\u3059\u308b</div>' +
+          '<label>\u540d\u524d<input name="name" autocomplete="name" maxlength="40" placeholder="\u540d\u524d"></label>' +
+          '<label>\u30b3\u30e1\u30f3\u30c8<textarea name="comment" required maxlength="1200" placeholder="\u30b3\u30e1\u30f3\u30c8\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044"></textarea></label>' +
+          '<button type="submit">\u9001\u4fe1\u3059\u308b</button>' +
+          '<p class="comment-note">\u73fe\u5728\u306e\u30b3\u30e1\u30f3\u30c8\u306f\u3001\u3053\u306e\u7aef\u672b\u306e\u30d6\u30e9\u30a6\u30b6\u306b\u4fdd\u5b58\u3055\u308c\u307e\u3059\u3002\u7ba1\u7406\u8005\u3078\u306e\u9023\u7d61\u306f\u304a\u554f\u3044\u5408\u308f\u305b\u3092\u5229\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002</p>' +
+        '</form>' +
+      '</div>';
+
+    main.appendChild(comments);
+
+    var list = comments.querySelector('.comment-list');
+    var form = comments.querySelector('.comment-form');
+    var nameInput = form.elements.name;
+    var bodyInput = form.elements.comment;
+    var stored = loadComments();
+    renderComments(list, stored);
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var body = bodyInput.value.trim();
+      if (!body) return;
+
+      stored.push({
+        name: nameInput.value.trim() || '\u540d\u524d\u306a\u3057',
+        body: body,
+        date: new Date().toISOString()
+      });
+
+      saveComments(stored);
+      renderComments(list, stored);
+      bodyInput.value = '';
+    });
+  }
+
   function init() {
     initAnalytics();
-    if (document.querySelector('.share-buttons')) return;
+    if (document.querySelector('.share-buttons')) {
+      injectStyle();
+      injectPrNotice();
+      initComments();
+      return;
+    }
     if (isGameDetailPage()) {
       initGameDetailHeader();
+      initComments();
       return;
     }
     injectStyle();
@@ -294,6 +442,7 @@
       }
     }
     main.appendChild(buildButtons('bottom'));
+    initComments();
   }
 
   if (document.readyState === 'loading') {
