@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無料ゲーム | 今日もあいネコ</title>
+  <title>無料ゲーム一覧 | 今日もあいネコ</title>
   <meta name="description" content="作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。今後、遊びやすいものから順に整理していきます。">
   <link rel="canonical" href="https://toaruseigyoya.github.io/games/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="今日もあいネコ">
-  <meta property="og:title" content="無料ゲーム | 今日もあいネコ">
+  <meta property="og:title" content="無料ゲーム一覧 | 今日もあいネコ">
   <meta property="og:description" content="作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。">
   <meta property="og:url" content="https://toaruseigyoya.github.io/games/">
   <meta name="twitter:card" content="summary">
@@ -16,7 +16,7 @@
   {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": "無料ゲーム",
+    "name": "無料ゲーム一覧",
     "url": "https://toaruseigyoya.github.io/games/",
       "description": "作業や家事の合間に、短時間で遊べる軽いブラウザゲーム一覧。",
     "inLanguage": "ja",
@@ -34,22 +34,17 @@
       --text: #1e1b4b; --text2: #4c4980; --muted: #8b87c0;
       --bg: #f3f4ff; --card: rgba(255,255,255,.7); --border: rgba(255,255,255,.85);
       --shadow: rgba(99,102,241,.12);
+      --site-shadow: 0 12px 30px rgba(85,70,50,.08);
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Segoe UI','Hiragino Sans','Yu Gothic UI',sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
-    .top-banner { background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899); color: #fff; text-align: center; padding: 9px 24px; font-size: .78rem; font-weight: 700; position: relative; z-index: 2; }
-    .orb { position: fixed; border-radius: 50%; filter: blur(95px); pointer-events: none; z-index: 0; }
-    .orb-1 { width: 520px; height: 520px; background: rgba(99,102,241,.2); top: -160px; left: -120px; }
-    .orb-2 { width: 460px; height: 460px; background: rgba(236,72,153,.13); bottom: -120px; right: -100px; }
-    header { position: sticky; top: 0; z-index: 3; background: rgba(243,244,255,.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,.75); }
-    .header-inner { max-width: 1060px; height: 54px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
-    .header-logo { font-size: .9rem; font-weight: 800; background: linear-gradient(135deg, var(--indigo), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .header-nav { display: flex; gap: 18px; }
-    .header-nav a { font-size: .8rem; font-weight: 700; color: var(--text2); text-decoration: none; }
-    .header-nav a:hover { color: var(--indigo); }
-    main { max-width: 1060px; margin: 0 auto; padding: 40px 24px 72px; position: relative; z-index: 1; }
+    .site-banner { max-width:920px; margin:18px auto 0; padding:0 18px; }
+    .site-banner img { width:100%; max-height:300px; object-fit:contain; background:#fff; border-radius:18px; border:3px solid #fff; box-shadow:var(--site-shadow); display:block; }
+    main { max-width: 920px; margin: 0 auto; padding: 18px 18px 72px; position: relative; z-index: 1; }
+    .top { display:flex; justify-content:flex-start; gap:16px; align-items:center; margin-bottom:22px; }
+    .home-link { display:inline-flex; align-items:center; min-height:42px; padding:8px 12px; border-radius:12px; background:#f6fbff; border:1px solid #dcecf7; color:#526179; text-decoration:none; font-weight:900; }
+    .home-link:hover { color:#273044; text-decoration:underline; }
     .page-head { margin-bottom: 22px; }
-    .crumb { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; color: var(--text2); font-size: .8rem; font-weight: 700; text-decoration: none; }
     h1 { font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.15; letter-spacing: 0; margin-bottom: 10px; }
     .lead { max-width: 680px; color: var(--text2); font-size: .95rem; }
     .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
@@ -77,8 +72,7 @@
     .footer-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
     .footer-links a { display:inline-flex; align-items:center; min-height:42px; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.72); border:1px solid var(--border); color:var(--text2); text-decoration:none; font-size:.9rem; font-weight:850; }
     @media (max-width: 700px) {
-      .header-nav { display: none; }
-      main { padding-top: 28px; }
+      .site-banner, main { padding-inline:14px; }
       .games-grid { grid-template-columns: 1fr; }
       .game-controls { grid-template-columns: 1fr; }
       .genre-tabs { justify-content: flex-start; }
@@ -87,22 +81,11 @@
   <script defer src="/assets/share-buttons.js"></script>
 </head>
 <body>
-  <div class="top-banner">作業や家事の合間に遊べる軽いブラウザゲーム</div>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <header>
-    <div class="header-inner">
-      <span class="header-logo">今日もあいネコ</span>
-      <nav class="header-nav">
-        <a href="../">ホーム</a>
-        <a href="../tools/">公開ツール一覧</a>
-      </nav>
-    </div>
-  </header>
+  <div class="site-banner"><img src="../assets/images/aineko-banner.png" alt="とある制御屋の備忘録"></div>
   <main>
+    <div class="top"><a class="home-link" href="https://toaruseigyoya.github.io/">ホームへ戻る</a></div>
     <div class="page-head">
-      <a class="crumb" href="../">← ホームへ戻る</a>
-      <h1>無料ゲーム</h1>
+      <h1>無料ゲーム一覧</h1>
       <p class="lead">作業や家事の合間に、短時間で遊べる軽いブラウザゲームを置いています。今後、遊びやすいものから順に整理していきます。</p>
     </div>
     <section>
