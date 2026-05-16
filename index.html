@@ -55,6 +55,11 @@
     .link-card { display:block; min-height:56px; padding:14px; border-radius:14px; background:#fff; border:1px solid var(--line); color:var(--ink); text-decoration:none; transition:transform .15s, box-shadow .15s, border-color .15s; }
     .link-card:hover { transform:translateY(-2px); border-color:rgba(54,196,159,.45); box-shadow:0 10px 24px rgba(54,196,159,.12); }
     .link-title { display:block; font-size:1rem; font-weight:900; line-height:1.45; white-space:normal; overflow:visible; text-overflow:clip; }
+    .update-history { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; display:grid; gap:8px; }
+    .update-history h2 { font-size:.96rem; line-height:1.4; }
+    .history-list { display:grid; gap:6px; }
+    .history-item { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; color:var(--sub); font-size:.84rem; line-height:1.55; }
+    .history-item time { color:#0f7f68; font-weight:900; }
     .footer-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
     .footer-links a { display:inline-flex; align-items:center; min-height:42px; padding:8px 12px; border-radius:12px; background:#f6fbff; border:1px solid #dcecf7; color:#526179; text-decoration:none; font-size:.92rem; font-weight:900; }
     .footer-links a:hover { color:#273044; text-decoration:underline; }
@@ -63,6 +68,7 @@
       .page { grid-template-columns:1fr; padding-inline:14px; }
       .profile { position:static; }
       .link-card { min-height:52px; }
+      .history-item { grid-template-columns:1fr; gap:2px; }
       .mini-grid { grid-template-columns:1fr; }
     }
   </style>
@@ -81,6 +87,19 @@
       <a class="link-card" href="https://toaruseigyoya.github.io/about/">
         <span class="link-title">このサイトについて(プロフィール)</span>
       </a>
+      <div class="update-history" aria-label="更新履歴">
+        <h2>更新履歴</h2>
+        <div class="history-list">
+          <div class="history-item"><time datetime="2026-05-16">2026/5/16</time><span>ホームページ表記整理・お問い合わせフォーム導線調整</span></div>
+          <div class="history-item"><time datetime="2026-05-13">2026/5/13</time><span>サイト全体のナビゲーション・ブランド表記整理</span></div>
+          <div class="history-item"><time datetime="2026-05-12">2026/5/12</time><span>プロフィール・note・Instagram関連ページ追加</span></div>
+          <div class="history-item"><time datetime="2026-05-10">2026/5/10</time><span>サイト運営・広告掲載向けページ整備</span></div>
+          <div class="history-item"><time datetime="2026-05-05">2026/5/5</time><span>公開ツール一覧ページ追加</span></div>
+          <div class="history-item"><time datetime="2026-05-04">2026/5/4</time><span>無料ゲームページ・タスク管理ページ追加</span></div>
+          <div class="history-item"><time datetime="2026-05-03">2026/5/3</time><span>サイト名変更・基本デザイン整理</span></div>
+          <div class="history-item"><time datetime="2026-05-02">2026/5/2</time><span>ホームページ作成開始</span></div>
+        </div>
+      </div>
       <a class="link-card" href="https://toaruseigyoya.github.io/note/">
         <span class="link-title">note投稿記事一覧</span>
       </a>
