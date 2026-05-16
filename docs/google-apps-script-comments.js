@@ -1,6 +1,7 @@
 const COMMENTS_SHEET_NAME = 'comments';
 const CONTACTS_SHEET_NAME = 'contacts';
 const COMMENT_BLACKLIST_SHEET_NAME = 'comment_blacklist';
+const COMMENT_ATTEMPTS_SHEET_NAME = 'comment_attempts';
 const ADMIN_EMAIL = 'toaruseigyoya@gmail.com';
 const COMMENT_LIMIT_10_MINUTES = 5;
 const COMMENT_LIMIT_24_HOURS = 20;
@@ -64,6 +65,9 @@ function handleComment_(data) {
   }
 
   const fingerprintHash = digest_(clean_(data.fingerprint || data.userAgent, 1200));
+  if (clean_(data.checked, 10) !== '1') {
+    registerCommentAttempt_(clean_(data.id, 80) || Utilities.getUuid(), now, fingerprintHash, pagePath, name, comment, 'post');
+  }
   const decision = commentDecision_(fingerprintHash, pagePath, name, comment, now);
   if (!decision.ok) {
     return output_({ ok: false, error: 'rejected', reason: decision.reason }, data.callback);
@@ -96,6 +100,7 @@ function handleComment_(data) {
 
 function checkComment_(data) {
   const now = new Date();
+  const id = clean_(data.id, 80) || Utilities.getUuid();
   const pagePath = normalizePath_(data.pagePath);
   const name = clean_(data.name, 40) || '名前なし';
   const comment = clean_(data.comment, 1200);
@@ -104,6 +109,7 @@ function checkComment_(data) {
   }
 
   const fingerprintHash = digest_(clean_(data.fingerprint || data.userAgent, 1200));
+  registerCommentAttempt_(id, now, fingerprintHash, pagePath, name, comment, 'check');
   return commentDecision_(fingerprintHash, pagePath, name, comment, now);
 }
 
@@ -204,6 +210,18 @@ function getCommentBlacklistSheet_() {
   ]);
 }
 
+function getCommentAttemptsSheet_() {
+  return getSheet_(COMMENT_ATTEMPTS_SHEET_NAME, [
+    'id',
+    'createdAt',
+    'fingerprintHash',
+    'pagePath',
+    'name',
+    'comment',
+    'source'
+  ]);
+}
+
 function getSheet_(name, headers) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(name);
@@ -258,6 +276,35 @@ function readCommentBlacklist_() {
   })).filter(row => row.kind && row.value && row.enabled);
 }
 
+function registerCommentAttempt_(id, now, fingerprintHash, pagePath, name, comment, source) {
+  const sheet = getCommentAttemptsSheet_();
+  sheet.appendRow([
+    id,
+    now.toISOString(),
+    fingerprintHash,
+    pagePath,
+    name,
+    comment,
+    source
+  ]);
+}
+
+function readCommentAttempts_() {
+  const sheet = getCommentAttemptsSheet_();
+  const values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return [];
+
+  return values.slice(1).map(row => ({
+    id: String(row[0] || ''),
+    createdAt: String(row[1] || ''),
+    fingerprintHash: String(row[2] || ''),
+    pagePath: normalizePath_(row[3]),
+    name: String(row[4] || ''),
+    comment: String(row[5] || ''),
+    source: String(row[6] || '')
+  })).filter(row => row.id && row.id !== 'id' && row.fingerprintHash);
+}
+
 function commentDecision_(fingerprintHash, pagePath, name, comment, now) {
   const blacklistReason = blacklistBlockReason_(fingerprintHash, pagePath, name, comment);
   if (blacklistReason) {
@@ -304,23 +351,25 @@ function spamBlockReason_(fingerprintHash, comment, now) {
   if (!fingerprintHash) return '';
 
   const comments = readComments_();
-  const recent = comments.filter(row => row.fingerprintHash === fingerprintHash);
+  const attempts = readCommentAttempts_();
+  const recentAttempts = attempts.filter(row => row.fingerprintHash === fingerprintHash);
+  const recentComments = comments.filter(row => row.fingerprintHash === fingerprintHash);
   const nowMs = now.getTime();
   const tenMinutes = 10 * 60 * 1000;
   const oneDay = 24 * 60 * 60 * 1000;
 
-  const count10Min = recent.filter(row => nowMs - new Date(row.createdAt).getTime() <= tenMinutes).length;
-  if (count10Min >= COMMENT_LIMIT_10_MINUTES) {
+  const count10Min = recentAttempts.filter(row => nowMs - new Date(row.createdAt).getTime() <= tenMinutes).length;
+  if (count10Min > COMMENT_LIMIT_10_MINUTES) {
     return 'too_many_comments_10min';
   }
 
-  const count24Hours = recent.filter(row => nowMs - new Date(row.createdAt).getTime() <= oneDay).length;
-  if (count24Hours >= COMMENT_LIMIT_24_HOURS) {
+  const count24Hours = recentAttempts.filter(row => nowMs - new Date(row.createdAt).getTime() <= oneDay).length;
+  if (count24Hours > COMMENT_LIMIT_24_HOURS) {
     return 'too_many_comments_24h';
   }
 
   const normalized = normalizeCommentText_(comment);
-  const duplicate = recent.some(row =>
+  const duplicate = recentComments.some(row =>
     nowMs - new Date(row.createdAt).getTime() <= oneDay &&
     normalizeCommentText_(row.comment) === normalized
   );

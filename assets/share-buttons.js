@@ -656,6 +656,7 @@
 
         loadCommentsJsonp({
           mode: 'checkComment',
+          id: payload.id,
           pagePath: payload.pagePath,
           name: payload.name,
           comment: payload.comment,
@@ -667,6 +668,7 @@
             return;
           }
 
+          payload.checked = '1';
           postComment(payload);
           setTimeout(function () {
             loadCommentsJsonp({ mode: 'page', pagePath: pagePath() }, function (data) {
