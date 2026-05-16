@@ -57,7 +57,10 @@
     .link-title { display:block; font-size:1rem; font-weight:900; line-height:1.45; white-space:normal; overflow:visible; text-overflow:clip; }
     .update-history { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; display:grid; gap:8px; }
     .update-history h2 { font-size:.96rem; line-height:1.4; }
-    .history-list { display:grid; gap:6px; }
+    .history-list { display:grid; gap:6px; max-height:86px; overflow-y:auto; padding-right:6px; }
+    .history-list::-webkit-scrollbar { width:8px; }
+    .history-list::-webkit-scrollbar-thumb { background:#d9c7ba; border-radius:999px; }
+    .history-list::-webkit-scrollbar-track { background:#f8eee5; border-radius:999px; }
     .history-item { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; color:var(--sub); font-size:.84rem; line-height:1.55; }
     .history-item time { color:#0f7f68; font-weight:900; }
     .footer-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
@@ -112,9 +115,9 @@
       <a class="link-card" href="https://toaruseigyoya.github.io/games/">
         <span class="link-title">無料ゲーム一覧</span>
       </a>
-      <div class="mini-grid">
-        <a class="mini-card" href="https://toaruseigyoya.github.io/articles/"><strong>あいネコ日記</strong><span>AI活用・子育て・ツールのメモ</span></a>
-      </div>
+      <a class="link-card" href="https://toaruseigyoya.github.io/articles/">
+        <span class="link-title">あいネコ日記</span>
+      </a>
     </section>
   </main>
   <footer>
