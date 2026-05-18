@@ -152,7 +152,26 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto auto auto;
       gap: 7px;
-      margin: -4px 0 12px;
+      margin: 0;
+    }
+    .task-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(224,242,254,.28);
+    }
+    .task-toolbar .workspace-tabs { margin: 0; }
+    .task-toolbar .workspace-manager { grid-template-columns: minmax(110px, 1fr) auto auto auto; }
+    .task-toolbar-title {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 900;
     }
     h2 { margin: 0; font-size: 1rem; }
     .count {
@@ -230,8 +249,14 @@
     }
     .new-task-group {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
       gap: 7px;
+      margin-top: 10px;
+    }
+    .csv-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       margin-top: 10px;
     }
     .inline-fields {
@@ -476,9 +501,7 @@
     .empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .empty-actions button { padding: 8px 10px; font-size: .78rem; }
     .info-sections {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
+      display: block;
       margin-top: 18px;
     }
     .info-card {
@@ -489,6 +512,7 @@
       box-shadow: 0 12px 30px rgba(37,99,235,.08);
     }
     .info-card h2 { font-size: 1.05rem; margin-bottom: 8px; }
+    .info-card h3 { margin: 18px 0 8px; font-size: .98rem; }
     .info-card p, .info-card li {
       color: var(--muted);
       font-size: .88rem;
@@ -513,6 +537,59 @@
       display: none;
     }
     .group-modal.open { display: block; }
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15,23,42,.32);
+    }
+    .confirm-modal.open { display: grid; }
+    .confirm-box {
+      width: min(560px, 100%);
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 16px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 24px 70px rgba(15,23,42,.28);
+    }
+    .confirm-box h2 { margin-bottom: 10px; }
+    .confirm-box p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: .86rem;
+      font-weight: 750;
+      line-height: 1.7;
+    }
+    .delete-options {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .delete-options label {
+      margin: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(224,242,254,.28);
+      color: var(--text);
+      font-size: .86rem;
+    }
+    .strong-warning {
+      padding: 10px;
+      border-radius: 12px;
+      background: #ffe4e6;
+      color: #be123c !important;
+      font-weight: 900 !important;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
     .group-modal-head {
       display: flex;
       justify-content: space-between;
@@ -523,7 +600,7 @@
     .group-settings-list { display: grid; gap: 6px; }
     .group-settings-row {
       display: grid;
-      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      grid-template-columns: auto auto minmax(0, 1fr) auto auto;
       gap: 6px;
       align-items: center;
       padding: 6px;
@@ -550,6 +627,8 @@
       .task-list { max-height: none; }
       .task { grid-template-columns: 24px 42px minmax(0, 1fr); }
       .task-meta { grid-column: 3; justify-content: flex-start; }
+      .task-toolbar { grid-template-columns: 1fr; }
+      .task-toolbar .workspace-manager { grid-template-columns: 1fr 1fr; }
       .list-actions { grid-template-columns: 1fr 1fr; }
       .new-task-group { grid-template-columns: 1fr; }
       .info-sections { grid-template-columns: 1fr; }
@@ -586,13 +665,6 @@
     </section>
     <div class="app">
       <section class="panel input-panel">
-        <div class="workspace-tabs" id="workspaceTabs" aria-label="タスク管理タブ"></div>
-        <div class="workspace-manager" aria-label="タブ設定">
-          <input class="field" id="workspaceNameInput" type="text" placeholder="タブ名">
-          <button class="subtle" id="addWorkspaceButton" type="button">追加</button>
-          <button class="subtle" id="renameWorkspaceButton" type="button">名称変更</button>
-          <button class="danger" id="deleteWorkspaceButton" type="button">削除</button>
-        </div>
         <div class="panel-head">
           <h2>入力</h2>
         </div>
@@ -603,9 +675,10 @@
           <select class="field" id="newTaskGroup" aria-label="追加先グループ"></select>
           <input class="field" id="newGroupName" type="text" placeholder="新規グループ名">
           <button class="subtle" id="createGroupButton" type="button">作成</button>
+          <button class="danger" id="deleteCurrentGroupButton" type="button">削除</button>
         </div>
         <div class="quick-guide">
-          <strong>使い方：</strong>1行に1件ずつタスクを入力してください。複数行入力すると、まとめて複数タスクを追加できます。
+          <strong>タスク追加部分の使い方：</strong>1行に1件ずつタスクを入力してください。複数行入力すると、まとめて複数タスクを追加できます。追加先グループを選ぶと、そのグループの先頭に登録されます。新しい分類を使いたい場合は、新規グループ名を入力して作成してから追加してください。
           <pre>入力例:
 資料作成
 メール返信
@@ -616,11 +689,31 @@
           <span id="filePick">ファイルを選択</span>、またはここへドラッグ
         </div>
         <p class="import-help">ファイル取込：.txt / .md / .csv / .tsv を読み込めます。ファイル内の1行を1タスクとして入力欄へ取り込みます。</p>
+        <div class="csv-actions" aria-label="CSV連携">
+          <button class="subtle" id="csvImportButton" type="button">CSVインポート</button>
+          <button class="subtle" id="csvExportButton" type="button">CSVエクスポート</button>
+          <input id="csvImportInput" type="file" accept=".csv,text/csv" hidden>
+        </div>
         <button class="add-task-button" id="taskButton" type="button">タスク追加</button>
         <div class="toast" id="toast" aria-live="polite"></div>
       </section>
 
       <section class="panel">
+        <div class="task-toolbar" aria-label="タブ操作">
+          <div>
+            <div class="task-toolbar-title">業務／個人タブ</div>
+            <div class="workspace-tabs" id="workspaceTabs" aria-label="タスク管理タブ"></div>
+          </div>
+          <div>
+            <div class="task-toolbar-title">タブ設定</div>
+            <div class="workspace-manager" aria-label="タブ設定">
+              <input class="field" id="workspaceNameInput" type="text" placeholder="タブ名">
+              <button class="subtle" id="addWorkspaceButton" type="button">追加</button>
+              <button class="subtle" id="renameWorkspaceButton" type="button">名称変更</button>
+              <button class="danger" id="deleteWorkspaceButton" type="button">削除</button>
+            </div>
+          </div>
+        </div>
         <div class="panel-head">
           <h2>タスク一覧</h2>
           <span class="count" id="taskCount">全件: 0、未着手: 0、進行中: 0、完了: 0</span>
@@ -635,14 +728,28 @@
       </section>
     </div>
 
-    <section class="info-sections" aria-label="タスク管理ツールの説明">
+    <section class="info-sections" aria-label="操作説明">
       <div class="info-card">
-        <h2>このタスク管理ツールについて</h2>
-        <p>このページは、ブラウザでそのまま使える無料のタスク管理ツールです。インストールや会員登録は不要で、日々のToDoリスト、作業メモ、買い物リスト、現場作業のチェックリストなどを簡単に作成できます。</p>
-        <p>改行ごとの一括登録に対応しているため、メモ帳やExcelからコピーした作業リストもまとめて登録できます。ファイル取込機能を使うことで、テキストファイルやCSVファイルからタスクを追加できます。</p>
-      </div>
-      <div class="info-card">
-        <h2>おすすめの使い方</h2>
+        <h2>操作説明</h2>
+        <p>このタスク管理アプリは、ブラウザだけで使える無料のToDoリスト・作業リスト管理ツールです。会員登録やインストールは不要で、入力したタスクは利用中のブラウザに保存されます。日々の仕事、家事、買い物、現場作業、学習、問い合わせ対応など、複数の作業をまとめて整理したい場面で利用できます。</p>
+        <p>タスク管理ツールでできることは、タスク追加、完了チェック、進捗管理、期限管理、優先度設定、グループ分け、業務／個人タブの切り替え、タスクの並び替え、サブ項目の追加、CSVインポート／エクスポートです。メモ帳や表計算ソフトで作ったリストを取り込み、ブラウザ上で見やすい作業リストに整える用途にも向いています。</p>
+        <h3>業務／個人タブの使い方</h3>
+        <p>業務／個人タブは、仕事用のタスクと個人用のタスクを分けて管理するための切り替え機能です。タブはタスク一覧の上に表示され、現在選択しているタブのタスクだけが一覧に表示されます。タブ名は自由に追加・名称変更・削除できます。たとえば「業務」「個人的」「買い物」「学習」「現場対応」のように用途別の作業領域を作れます。</p>
+        <h3>グループ管理の使い方</h3>
+        <p>グループは、同じタブ内のタスクをさらに分類するための機能です。タスク追加時にグループを選ぶと、そのグループへ登録されます。新しいグループ名を入力して作成すると、追加先として選べるようになります。グループ順序設定では、表示順の変更、表示／非表示の切り替え、不要になったグループの削除ができます。</p>
+        <p>グループ削除時は、削除対象グループに含まれるタスクを「未分類へ移動」するか、「グループと一緒にタスクも削除」するかを選べます。タスクも削除する場合は復元が難しいため、削除対象のタスク数を確認してから実行してください。</p>
+        <h3>タスク追加、編集、削除、並び替え</h3>
+        <p>入力欄に1行1件でタスクを書き、「タスク追加」を押すとまとめて登録できます。タスクをクリックすると編集欄が開き、タスク名、グループ、期限、重要度、進捗、備考、サブ項目を編集できます。チェックボックスを押すと完了状態になります。タスク横の上下ボタンで同じグループ内の並び順を変更できます。</p>
+        <p>選択中のタスクは「選択を削除」で削除できます。「完了を削除」は、現在のタブ内で完了済みになっているタスクをまとめて削除します。グループ見出しの「折りたたみ」は、グループ内のタスク表示だけを一時的に閉じる操作です。グループ自体を表示対象から外したい場合は、グループ順序設定の表示／非表示を使ってください。</p>
+        <h3>CSVインポート／エクスポート</h3>
+        <p>CSVエクスポートを使うと、現在保存されているタスク管理データをCSVファイルとして出力できます。バックアップ、別端末への移行、表計算ソフトでの確認に利用できます。CSVインポートでは、CSVファイルを読み込み、既存データに追加するか、現在のデータを全置き換えするかを選択できます。取り込み前には確認ダイアログが表示されるため、大量追加や意図しない上書きを防ぎやすくしています。</p>
+        <details>
+          <summary>各ボタンの詳細説明と注意事項</summary>
+          <p>「追加」は新しいタブを作成します。「名称変更」は現在選択しているタブ名を変更します。「削除」は現在選択しているタブと、そのタブ内のタスクを削除します。グループの「作成」は入力したグループ名を追加します。グループの「削除」は選択中のグループを削除しますが、タスクを未分類へ残す選択もできます。</p>
+          <p>ファイル取込は、テキストファイルやCSVファイル内の行を入力欄へ読み込む簡易機能です。CSVインポートは、タブ種別、グループ名、タスク名、期限、優先度、メモ、完了状態、並び順を含むデータ移行用の機能です。用途が違うため、単純にタスク名だけを読み込みたい場合はファイル取込、バックアップや復元に使いたい場合はCSVインポートを使ってください。</p>
+          <p>ブラウザ保存のため、別ブラウザや別端末ではデータは共有されません。バックアップしたい場合は、定期的にCSVエクスポートを行ってください。ブラウザのデータ削除、シークレットウィンドウ、端末変更を行うと、保存済みタスクを確認できなくなる場合があります。</p>
+        </details>
+        <h3>利用例</h3>
         <ul>
           <li>今日やることの整理</li>
           <li>仕事の作業リスト作成</li>
@@ -662,6 +769,22 @@
     <div class="group-settings-list" id="groupSettingsList"></div>
   </div>
 
+  <div class="confirm-modal" id="groupDeleteModal" aria-hidden="true">
+    <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="groupDeleteTitle">
+      <h2 id="groupDeleteTitle">グループ削除の確認</h2>
+      <p id="groupDeleteSummary"></p>
+      <div class="delete-options">
+        <label><input type="radio" name="groupDeleteMode" value="move" checked> タスクは未分類へ移動</label>
+        <label><input type="radio" name="groupDeleteMode" value="delete"> グループと一緒にタスクも削除</label>
+      </div>
+      <p class="strong-warning" id="groupDeleteWarning">タスクも削除を選ぶと、対象タスクはこの画面から復元できません。</p>
+      <div class="modal-actions">
+        <button class="subtle" id="groupDeleteCancel" type="button">キャンセル</button>
+        <button class="danger" id="groupDeleteConfirm" type="button">削除する</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       var input = document.getElementById('taskInput');
@@ -674,6 +797,10 @@
       var newTaskGroup = document.getElementById('newTaskGroup');
       var newGroupName = document.getElementById('newGroupName');
       var createGroupButton = document.getElementById('createGroupButton');
+      var deleteCurrentGroupButton = document.getElementById('deleteCurrentGroupButton');
+      var csvImportButton = document.getElementById('csvImportButton');
+      var csvExportButton = document.getElementById('csvExportButton');
+      var csvImportInput = document.getElementById('csvImportInput');
       var dropZone = document.getElementById('dropZone');
       var fileInput = document.getElementById('fileInput');
       var filePick = document.getElementById('filePick');
@@ -685,10 +812,16 @@
       var groupSettingsList = document.getElementById('groupSettingsList');
       var deleteButton = document.getElementById('deleteButton');
       var clearDoneButton = document.getElementById('clearDoneButton');
+      var groupDeleteModal = document.getElementById('groupDeleteModal');
+      var groupDeleteSummary = document.getElementById('groupDeleteSummary');
+      var groupDeleteCancel = document.getElementById('groupDeleteCancel');
+      var groupDeleteConfirm = document.getElementById('groupDeleteConfirm');
+      var groupDeleteWarning = document.getElementById('groupDeleteWarning');
       var toast = document.getElementById('toast');
       var storageKey = 'toaruseigyoya-task-app';
       var groupOrderKey = 'toaruseigyoya-task-groups';
       var hiddenGroupsKey = 'toaruseigyoya-task-hidden-groups';
+      var collapsedGroupsKey = 'toaruseigyoya-task-collapsed-groups';
       var workspaceKey = 'toaruseigyoya-task-workspace';
       var workspaceListKey = 'toaruseigyoya-task-workspaces';
       var workspaces = loadWorkspaces();
@@ -699,6 +832,8 @@
       var tasks = load();
       var groupOrder = loadGroupOrder();
       var hiddenGroups = loadHiddenGroups();
+      var collapsedGroups = loadCollapsedGroups();
+      var pendingDeleteGroup = null;
       syncWorkspaces();
 
       function normalizeWorkspaceName(name) {
@@ -777,6 +912,18 @@
         localStorage.setItem(hiddenGroupsKey, JSON.stringify(hiddenGroups));
       }
 
+      function loadCollapsedGroups() {
+        try {
+          return JSON.parse(localStorage.getItem(collapsedGroupsKey) || '{}');
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function saveCollapsedGroups() {
+        localStorage.setItem(collapsedGroupsKey, JSON.stringify(collapsedGroups));
+      }
+
       function workspaceTasks() {
         return tasks.filter(function (task) { return (task.workspace || workspaces[0]) === activeWorkspace; });
       }
@@ -791,8 +938,17 @@
         return hiddenGroups[activeWorkspace];
       }
 
+      function workspaceCollapsed() {
+        if (!Array.isArray(collapsedGroups[activeWorkspace])) collapsedGroups[activeWorkspace] = [];
+        return collapsedGroups[activeWorkspace];
+      }
+
       function isGroupHidden(group) {
         return workspaceHidden().includes(group);
+      }
+
+      function isGroupCollapsed(group) {
+        return workspaceCollapsed().includes(group);
       }
 
       function show(message) {
@@ -1074,12 +1230,17 @@
           hiddenGroups[nextName] = hiddenGroups[currentName];
           delete hiddenGroups[currentName];
         }
+        if (collapsedGroups[currentName]) {
+          collapsedGroups[nextName] = collapsedGroups[currentName];
+          delete collapsedGroups[currentName];
+        }
         activeWorkspace = nextName;
         workspaceNameInput.value = '';
         saveWorkspaces();
         save();
         saveGroupOrder();
         saveHiddenGroups();
+        saveCollapsedGroups();
         localStorage.setItem(workspaceKey, activeWorkspace);
         show('タブ名を「' + nextName + '」に変更しました。');
         render();
@@ -1097,6 +1258,7 @@
         tasks = tasks.filter(function (task) { return (task.workspace || currentName) !== currentName; });
         delete groupOrder[currentName];
         delete hiddenGroups[currentName];
+        delete collapsedGroups[currentName];
         activeWorkspace = workspaces[0];
         selectedId = null;
         selectedDisplayGroup = null;
@@ -1105,6 +1267,7 @@
         save();
         saveGroupOrder();
         saveHiddenGroups();
+        saveCollapsedGroups();
         localStorage.setItem(workspaceKey, activeWorkspace);
         show('タブ「' + currentName + '」を削除しました。');
         render();
@@ -1315,22 +1478,65 @@
       }
 
       function deleteGroup(group) {
-        if (!confirm('グループ「' + group + '」のタスクを全て削除してもよろしいですか')) return;
+        openGroupDeleteModal(group);
+      }
+
+      function groupTaskCount(group) {
+        return workspaceTasks().filter(function (task) {
+          var displayGroup = task.id === selectedId && selectedDisplayGroup ? selectedDisplayGroup : taskGroup(task);
+          return displayGroup === group;
+        }).length;
+      }
+
+      function openGroupDeleteModal(group) {
+        pendingDeleteGroup = group;
+        var targetTasks = groupTaskCount(group);
+        var moveOption = document.querySelector('input[name="groupDeleteMode"][value="move"]');
+        if (moveOption) moveOption.checked = true;
+        groupDeleteSummary.textContent = '削除対象グループ: 「' + group + '」。このグループに含まれるタスク数: ' + targetTasks + '件。タスクの扱いを選んでから削除してください。';
+        groupDeleteWarning.textContent = '「グループと一緒にタスクも削除」を選ぶと、対象タスク ' + targetTasks + '件はこの画面から復元できません。必要なら先にCSVエクスポートでバックアップしてください。';
+        groupDeleteModal.classList.add('open');
+        groupDeleteModal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeGroupDeleteModal() {
+        pendingDeleteGroup = null;
+        groupDeleteModal.classList.remove('open');
+        groupDeleteModal.setAttribute('aria-hidden', 'true');
+      }
+
+      function confirmGroupDelete() {
+        var group = pendingDeleteGroup;
+        if (!group) return;
+        var mode = (document.querySelector('input[name="groupDeleteMode"]:checked') || {}).value || 'move';
+        var targetTasks = groupTaskCount(group);
+        if (mode === 'delete' && !confirm('最終確認です。グループ「' + group + '」とタスク ' + targetTasks + '件を削除します。復元は難しい可能性があります。本当に削除しますか？')) return;
         tasks = tasks.filter(function (task) {
           if ((task.workspace || workspaces[0]) !== activeWorkspace) return true;
           var displayGroup = task.id === selectedId && selectedDisplayGroup ? selectedDisplayGroup : taskGroup(task);
-          return displayGroup !== group;
+          if (displayGroup !== group) return true;
+          if (mode === 'move') {
+            task.group = '未分類';
+            task.order = nextTaskOrder('未分類');
+            return true;
+          }
+          return false;
         });
         if (!tasks.some(function (task) { return task.id === selectedId; })) {
           selectedId = null;
           selectedDisplayGroup = null;
         }
+        ensureGroup('未分類');
         save();
         groupOrder[activeWorkspace] = workspaceOrder().filter(function (item) { return item !== group; });
         hiddenGroups[activeWorkspace] = workspaceHidden().filter(function (item) { return item !== group; });
+        collapsedGroups[activeWorkspace] = workspaceCollapsed().filter(function (item) { return item !== group; });
         saveGroupOrder();
         saveHiddenGroups();
+        saveCollapsedGroups();
+        closeGroupDeleteModal();
         syncGroupOrder();
+        show(mode === 'move' ? 'グループ「' + group + '」を削除し、タスク ' + targetTasks + '件を未分類へ移動しました。' : 'グループ「' + group + '」とタスク ' + targetTasks + '件を削除しました。');
         render();
       }
 
@@ -1371,6 +1577,14 @@
         render();
       }
 
+      function toggleGroupCollapsed(group) {
+        var collapsed = workspaceCollapsed();
+        if (collapsed.includes(group)) collapsedGroups[activeWorkspace] = collapsed.filter(function (item) { return item !== group; });
+        else collapsed.push(group);
+        saveCollapsedGroups();
+        render();
+      }
+
       function renderGroupSettings() {
         groupSettingsList.innerHTML = '';
         syncGroupOrder();
@@ -1395,11 +1609,17 @@
           check.checked = !isGroupHidden(group);
           check.addEventListener('change', function () { toggleGroupHidden(group); });
           visible.appendChild(check);
-          visible.appendChild(document.createTextNode('表示'));
+          visible.appendChild(document.createTextNode('表示／非表示'));
+          var deleteButton = document.createElement('button');
+          deleteButton.type = 'button';
+          deleteButton.className = 'danger';
+          deleteButton.textContent = '削除';
+          deleteButton.addEventListener('click', function () { deleteGroup(group); });
           row.appendChild(up);
           row.appendChild(down);
           row.appendChild(name);
           row.appendChild(visible);
+          row.appendChild(deleteButton);
           groupSettingsList.appendChild(row);
         });
       }
@@ -1487,8 +1707,8 @@
           down.addEventListener('click', function () { moveGroup(group, 1); });
           var toggle = document.createElement('button');
           toggle.type = 'button';
-          toggle.textContent = '非表示';
-          toggle.addEventListener('click', function () { toggleGroupHidden(group); });
+          toggle.textContent = isGroupCollapsed(group) ? '展開' : '折りたたみ';
+          toggle.addEventListener('click', function () { toggleGroupCollapsed(group); });
           var remove = document.createElement('button');
           remove.type = 'button';
           remove.textContent = '削除';
@@ -1501,6 +1721,8 @@
           heading.appendChild(groupLeft);
           heading.appendChild(actions);
           list.appendChild(heading);
+
+          if (isGroupCollapsed(group)) return;
 
           grouped[group].sort(sortTasks).forEach(function (task) {
           var item = document.createElement('div');
@@ -1633,6 +1855,148 @@
         });
       }
 
+      function csvEscape(value) {
+        value = value == null ? '' : String(value);
+        return /[",\r\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+      }
+
+      function parseCsv(text) {
+        var rows = [];
+        var row = [];
+        var field = '';
+        var quoted = false;
+        for (var i = 0; i < text.length; i++) {
+          var ch = text[i];
+          if (quoted) {
+            if (ch === '"' && text[i + 1] === '"') {
+              field += '"';
+              i++;
+            } else if (ch === '"') {
+              quoted = false;
+            } else {
+              field += ch;
+            }
+          } else if (ch === '"') {
+            quoted = true;
+          } else if (ch === ',') {
+            row.push(field);
+            field = '';
+          } else if (ch === '\n') {
+            row.push(field);
+            rows.push(row);
+            row = [];
+            field = '';
+          } else if (ch !== '\r') {
+            field += ch;
+          }
+        }
+        row.push(field);
+        if (row.some(function (value) { return value !== ''; })) rows.push(row);
+        return rows;
+      }
+
+      function exportCsv() {
+        var header = ['tab', 'group', 'task', 'due', 'priority', 'memo', 'done', 'progress', 'order', 'subtasks'];
+        var rows = tasks.map(function (task) {
+          return [
+            task.workspace || workspaces[0],
+            taskGroup(task),
+            task.text || '',
+            task.due || '',
+            task.priority || '中',
+            task.note || '',
+            task.done ? 'TRUE' : 'FALSE',
+            task.progress || '未着手',
+            Number.isFinite(Number(task.order)) ? String(task.order) : '0',
+            (task.items || []).map(function (item) { return (item.done ? '[x] ' : '[ ] ') + item.text; }).join('\n')
+          ];
+        });
+        var csv = [header].concat(rows).map(function (row) {
+          return row.map(csvEscape).join(',');
+        }).join('\r\n');
+        var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'task-backup-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        show('CSVをエクスポートしました。');
+      }
+
+      function importCsvFile(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var rows = parseCsv(String(reader.result || ''));
+          if (rows.length < 2) {
+            show('CSVに取り込めるデータがありません。');
+            return;
+          }
+          var header = rows[0].map(function (value) { return value.trim().toLowerCase(); });
+          var taskIndex = header.indexOf('task');
+          var groupIndex = header.indexOf('group');
+          var tabIndex = header.indexOf('tab');
+          if (taskIndex < 0) {
+            show('CSVの列が不足しています。task列が必要です。');
+            return;
+          }
+          var imported = [];
+          rows.slice(1).forEach(function (row, index) {
+            var text = (row[taskIndex] || '').trim();
+            if (!text) return;
+            var workspace = normalizeWorkspaceName(row[tabIndex] || activeWorkspace) || activeWorkspace;
+            var group = normalizeGroupName(row[groupIndex] || '未分類');
+            var doneText = (row[header.indexOf('done')] || '').toLowerCase();
+            imported.push({
+              id: makeId() + index,
+              workspace: workspace,
+              group: group,
+              text: text,
+              due: row[header.indexOf('due')] || '',
+              priority: row[header.indexOf('priority')] || '中',
+              note: row[header.indexOf('memo')] || '',
+              done: doneText === 'true' || doneText === '1' || doneText === '済' || doneText === '完了',
+              progress: row[header.indexOf('progress')] || '未着手',
+              order: Number(row[header.indexOf('order')]) || index,
+              color: colors[0],
+              items: []
+            });
+          });
+          if (!imported.length) {
+            show('CSVからタスクを読み取れませんでした。');
+            return;
+          }
+          var duplicateCount = imported.filter(function (item) {
+            return tasks.some(function (task) {
+              return (task.workspace || '') === item.workspace && taskGroup(task) === item.group && (task.text || '') === item.text;
+            });
+          }).length;
+          var mode = prompt('CSVから ' + imported.length + '件を取り込みます。重複候補: ' + duplicateCount + '件。\n既存データに追加する場合は「追加」、全置き換えする場合は「置換」と入力してください。', '追加');
+          if (mode !== '追加' && mode !== '置換') {
+            show('CSVインポートを中止しました。');
+            return;
+          }
+          if (mode === '置換' && !confirm('現在のタスクを全て置き換えます。必要なら先にCSVエクスポートでバックアップしてください。続行しますか？')) return;
+          tasks = mode === '置換' ? imported : tasks.concat(imported);
+          imported.forEach(function (task) {
+            if (!workspaces.includes(task.workspace)) workspaces.push(task.workspace);
+            if (!Array.isArray(groupOrder[task.workspace])) groupOrder[task.workspace] = [];
+            if (!groupOrder[task.workspace].includes(task.group)) groupOrder[task.workspace].push(task.group);
+          });
+          saveWorkspaces();
+          saveGroupOrder();
+          save();
+          syncWorkspaces();
+          syncGroupOrder();
+          show('CSVから ' + imported.length + '件を取り込みました。');
+          render();
+        };
+        reader.readAsText(file);
+      }
+
       taskButton.addEventListener('click', addTask);
       addWorkspaceButton.addEventListener('click', addWorkspace);
       renameWorkspaceButton.addEventListener('click', renameWorkspace);
@@ -1645,11 +2009,25 @@
         }
       });
       createGroupButton.addEventListener('click', createGroup);
+      deleteCurrentGroupButton.addEventListener('click', function () {
+        deleteGroup(newTaskGroup.value || '未分類');
+      });
       newGroupName.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
           event.preventDefault();
           createGroup();
         }
+      });
+      csvExportButton.addEventListener('click', exportCsv);
+      csvImportButton.addEventListener('click', function () { csvImportInput.click(); });
+      csvImportInput.addEventListener('change', function () {
+        importCsvFile(csvImportInput.files[0]);
+        csvImportInput.value = '';
+      });
+      groupDeleteCancel.addEventListener('click', closeGroupDeleteModal);
+      groupDeleteConfirm.addEventListener('click', confirmGroupDelete);
+      groupDeleteModal.addEventListener('click', function (event) {
+        if (event.target === groupDeleteModal) closeGroupDeleteModal();
       });
       groupSettingsButton.addEventListener('click', function () {
         groupModal.classList.add('open');
