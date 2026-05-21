@@ -146,6 +146,19 @@
       font-size: .72rem;
       font-weight: 750;
     }
+    .check-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 8px 14px 2px 0;
+      color: var(--ink);
+      font-size: .86rem;
+    }
+    .check-row input {
+      width: auto;
+      margin: 0;
+      accent-color: var(--blue);
+    }
     .planner-head { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto auto; gap: 8px; align-items: end; margin-bottom: 10px; }
     .timeline { display: grid; gap: 12px; max-height: 780px; overflow: auto; padding-right: 4px; }
     .day { border-top: 2px solid var(--line); padding-top: 10px; }
@@ -257,7 +270,8 @@
           <h2>デバッグ・調整メモ</h2>
           <ul>
             <li>外部APIは未接続。検索結果は外部サイトを別タブで開き、アプリ内取得やスクレイピングはしません。</li>
-            <li>電車の駅名候補は仮データです。検索先はYahoo路線情報、Googleマップ、NAVITIME、ジョルダンを選択できます。</li>
+            <li>電車の駅名候補はHeartRails Express APIを優先し、取得できない場合は仮データを使います。検索先はYahoo路線情報、Googleマップ、NAVITIME、ジョルダン、Ekitanを選択できます。</li>
+            <li>日付・時刻・出発/到着指定は検索先ごとにURLへ反映します。ただし外部サイト側のURL仕様変更や未公開パラメータにより、一部条件は無視される場合があります。</li>
             <li>自家用車・社用車・レンタカーは10分単位入力です。渋滞や休憩の余裕時間はメモ欄へ記録します。</li>
             <li>データはブラウザのlocalStorageに保存。別端末へ移す場合はJSON保存・JSON読込を使います。</li>
           </ul>
@@ -305,6 +319,8 @@
       var stationData = [];
       var fallbackStationData = [
         { name: '布袋', line: '名鉄犬山線', prefecture: '愛知県', kana: 'ほてい' },
+        { name: '岩倉', line: '名鉄犬山線', prefecture: '愛知県', kana: 'いわくら' },
+        { name: '江南', line: '名鉄犬山線', prefecture: '愛知県', kana: 'こうなん' },
         { name: '名古屋', line: 'JR東海道本線', prefecture: '愛知県', kana: 'なごや' },
         { name: '名古屋', line: 'あおなみ線', prefecture: '愛知県', kana: 'なごや' },
         { name: '名鉄名古屋', line: '名鉄名古屋本線', prefecture: '愛知県', kana: 'めいてつなごや' },
@@ -313,6 +329,7 @@
         { name: '東京', line: 'JR東海道新幹線', prefecture: '東京都', kana: 'とうきょう' },
         { name: '品川', line: 'JR東海道新幹線', prefecture: '東京都', kana: 'しながわ' },
         { name: '新大阪', line: 'JR東海道新幹線', prefecture: '大阪府', kana: 'しんおおさか' },
+        { name: '博多', line: 'JR山陽新幹線', prefecture: '福岡県', kana: 'はかた' },
         { name: '京都', line: 'JR東海道新幹線', prefecture: '京都府', kana: 'きょうと' },
         { name: '岐阜', line: 'JR東海道本線', prefecture: '岐阜県', kana: 'ぎふ' },
         { name: '栄', line: '名古屋市営地下鉄東山線', prefecture: '愛知県', kana: 'さかえ' },
@@ -328,6 +345,13 @@
             var url = new URL('https://transit.yahoo.co.jp/search/result');
             url.searchParams.set('from', data.from);
             url.searchParams.set('to', data.to);
+            applyYahooDateTime(url, data);
+            url.searchParams.set('s', data.timeMode === 'arrival' ? '1' : '0');
+            if (data.condition === '金額が安いルートを優先') url.searchParams.set('type', '4');
+            if (data.condition === '乗り換え回数が少ないルートを優先') url.searchParams.set('type', '5');
+            // Yahoo route parameters for train class options are not officially guaranteed.
+            if (data.useShinkansen) url.searchParams.set('expkind', '1');
+            if (data.useLimitedExpress) url.searchParams.set('expkind2', '1');
             return url.toString();
           }
         },
@@ -339,6 +363,10 @@
             url.searchParams.set('origin', data.from + '駅');
             url.searchParams.set('destination', data.to + '駅');
             url.searchParams.set('travelmode', 'transit');
+            // Google Maps URLs does not reliably accept transit arrival/departure date parameters.
+            if (data.date && data.time && data.timeMode === 'departure') {
+              url.searchParams.set('departure_time', String(toUnixSeconds(data.date, data.time)));
+            }
             return url.toString();
           }
         },
@@ -348,6 +376,10 @@
             var url = new URL('https://www.navitime.co.jp/transfer/searchlist');
             url.searchParams.set('orvStationName', data.from);
             url.searchParams.set('dnvStationName', data.to);
+            applyDateTimeGeneric(url, data);
+            url.searchParams.set('basis', data.timeMode === 'arrival' ? '1' : '0');
+            if (data.useShinkansen) url.searchParams.set('shinkansen', '1');
+            if (data.useLimitedExpress) url.searchParams.set('limitedExpress', '1');
             return url.toString();
           }
         },
@@ -357,6 +389,24 @@
             var url = new URL('https://www.jorudan.co.jp/norikae/cgi/nori.cgi');
             url.searchParams.set('eki1', data.from);
             url.searchParams.set('eki2', data.to);
+            applyDateTimeGeneric(url, data);
+            url.searchParams.set('Cway', data.timeMode === 'arrival' ? '1' : '0');
+            if (data.useShinkansen) url.searchParams.set('Cshinkansen', '1');
+            if (data.useLimitedExpress) url.searchParams.set('Ctokkyu', '1');
+            return url.toString();
+          }
+        },
+        ekitan: {
+          label: 'Ekitan',
+          buildUrl: function (data) {
+            var url = new URL('https://ekipre.ekitan.com/');
+            url.searchParams.set('from', data.from);
+            url.searchParams.set('to', data.to);
+            applyDateTimeGeneric(url, data);
+            url.searchParams.set('searchType', data.timeMode === 'arrival' ? 'arrival' : 'departure');
+            // Ekitan public page parameters are not officially documented; unsupported options may be ignored.
+            if (data.useShinkansen) url.searchParams.set('useShinkansen', '1');
+            if (data.useLimitedExpress) url.searchParams.set('useLimitedExpress', '1');
             return url.toString();
           }
         }
@@ -502,6 +552,9 @@
       function stationFieldHtml(inputId, listId, label, placeholder) {
         return '<div class="station-input-area"><label for="' + inputId + '">' + label + '</label><input id="' + inputId + '" type="text" autocomplete="off" placeholder="' + (placeholder || '') + '"><ul id="' + listId + '" class="station-suggest-list"></ul></div>';
       }
+      function checkboxHtml(id, label) {
+        return '<label class="check-row"><input id="' + id + '" type="checkbox"> <span>' + label + '</span></label>';
+      }
       function selectHtml(id, label, options, wide) {
         return '<div' + (wide ? ' class="wide"' : '') + '><label for="' + id + '">' + label + '</label><select id="' + id + '">' + options.map(function (option) { return '<option value="' + option + '">' + option + '</option>'; }).join('') + '</select></div>';
       }
@@ -530,6 +583,7 @@
           stationFieldHtml('toStation', 'toStationSuggestList', '到着駅', '東京') +
           selectHtml('routeProvider', '検索先', [], true) +
           selectHtml('condition', '条件', ['時間優先', '乗り換え回数が少ないルートを優先', '金額が安いルートを優先'], true) +
+          '<div class="wide">' + checkboxHtml('useShinkansen', '新幹線を利用する') + checkboxHtml('useLimitedExpress', '特急を利用する') + '</div>' +
           textAreaHtml('memo', '経路・メモ', '例: 名古屋駅発 のぞみ号 東京行き') +
           '</div>' +
           '<div class="actions"><button class="ghost" id="searchRouteButton" type="button">経路検索</button><button class="ghost" id="swapStationButton" type="button">駅を入れ替え</button></div>' +
@@ -589,6 +643,57 @@
       function setCommonDefaults() {
         if ($('eventDate')) $('eventDate').value = startDate.value || today();
       }
+      function selectedTrainTime() {
+        var mode = $('timeMode') && $('timeMode').value === '到着時間' ? 'arrival' : 'departure';
+        var time = mode === 'arrival' ? (($('endTime') && $('endTime').value) || ($('startTime') && $('startTime').value) || '') : (($('startTime') && $('startTime').value) || ($('endTime') && $('endTime').value) || '');
+        return { mode: mode, time: time };
+      }
+      function dateParts(dateText) {
+        var parts = String(dateText || '').split('-');
+        return {
+          y: parts[0] || '',
+          m: parts[1] || '',
+          d: parts[2] || ''
+        };
+      }
+      function timeParts(timeText) {
+        var parts = String(timeText || '').split(':');
+        return {
+          hh: parts[0] || '',
+          mm: parts[1] || ''
+        };
+      }
+      function toUnixSeconds(dateText, timeText) {
+        var date = new Date(String(dateText || today()) + 'T' + String(timeText || '00:00') + ':00');
+        return Math.floor(date.getTime() / 1000);
+      }
+      function applyYahooDateTime(url, data) {
+        var dp = dateParts(data.date);
+        var tp = timeParts(data.time);
+        if (dp.y) url.searchParams.set('y', dp.y);
+        if (dp.m) url.searchParams.set('m', String(Number(dp.m)));
+        if (dp.d) url.searchParams.set('d', String(Number(dp.d)));
+        if (tp.hh) url.searchParams.set('hh', String(Number(tp.hh)));
+        if (tp.mm) {
+          url.searchParams.set('m1', tp.mm.charAt(0) || '0');
+          url.searchParams.set('m2', tp.mm.charAt(1) || '0');
+        }
+      }
+      function applyDateTimeGeneric(url, data) {
+        if (data.date) {
+          var compactDate = data.date.replace(/-/g, '');
+          url.searchParams.set('date', compactDate);
+          url.searchParams.set('y', data.date.slice(0, 4));
+          url.searchParams.set('m', data.date.slice(5, 7));
+          url.searchParams.set('d', data.date.slice(8, 10));
+        }
+        if (data.time) {
+          var compactTime = data.time.replace(':', '');
+          url.searchParams.set('time', compactTime);
+          url.searchParams.set('hour', data.time.slice(0, 2));
+          url.searchParams.set('minute', data.time.slice(3, 5));
+        }
+      }
       function renderRouteProviderOptions() {
         var select = $('routeProvider');
         if (!select) return;
@@ -603,6 +708,7 @@
         select.addEventListener('change', function () { localStorage.setItem(providerKey, select.value); });
       }
       function loadStations() {
+        stationData = fallbackStationData;
         return fetch('./data/stations.json')
           .then(function (response) {
             if (!response.ok) throw new Error('stations.json not found');
@@ -614,6 +720,29 @@
           .catch(function () {
             stationData = fallbackStationData;
           });
+      }
+      function fetchHeartRailsStations(keyword) {
+        var query = normalizeStationText(keyword);
+        if (!query) return Promise.resolve([]);
+        var url = 'https://express.heartrails.com/api/json?method=getStations&name=' + encodeURIComponent(query);
+        return fetch(url)
+          .then(function (response) {
+            if (!response.ok) throw new Error('HeartRails station API failed');
+            return response.json();
+          })
+          .then(function (data) {
+            var stations = data && data.response && data.response.station;
+            if (!Array.isArray(stations)) return [];
+            return stations.map(function (station) {
+              return {
+                name: station.name,
+                line: station.line || '',
+                prefecture: station.prefecture || '',
+                kana: station.kana || station.yomi || ''
+              };
+            });
+          })
+          .catch(function () { return []; });
       }
       function normalizeStationText(text) {
         return String(text || '').normalize('NFKC').toLowerCase().replace(/駅$/, '').trim();
@@ -629,6 +758,16 @@
           return name.indexOf(query) >= 0 || kana.indexOf(query) >= 0 || line.indexOf(query) >= 0 || prefecture.indexOf(query) >= 0;
         }).slice(0, 10);
       }
+      function mergeStationCandidates(primary, fallback) {
+        var merged = [];
+        primary.concat(fallback).forEach(function (station) {
+          var key = [station.name, station.line || '', station.prefecture || station.pref || ''].join('|');
+          if (!merged.some(function (item) { return [item.name, item.line || '', item.prefecture || item.pref || ''].join('|') === key; })) {
+            merged.push(station);
+          }
+        });
+        return merged.slice(0, 20);
+      }
       function bindStationSuggestions() {
         setupStationAutocomplete('fromStation', 'fromStationSuggestList');
         setupStationAutocomplete('toStation', 'toStationSuggestList');
@@ -638,13 +777,26 @@
         var list = $(listId);
         if (!input || !list) return;
         input.addEventListener('input', function () {
-          renderStationCandidates(input, list, searchStationCandidates(input.value));
+          updateStationSuggestions(input, list);
         });
         input.addEventListener('focus', function () {
-          renderStationCandidates(input, list, searchStationCandidates(input.value));
+          updateStationSuggestions(input, list);
         });
         input.addEventListener('blur', function () {
           setTimeout(function () { hideStationCandidates(list); }, 160);
+        });
+      }
+      function updateStationSuggestions(input, list) {
+        var keyword = input.value;
+        var localCandidates = searchStationCandidates(keyword);
+        if (!normalizeStationText(keyword)) {
+          hideStationCandidates(list);
+          return;
+        }
+        renderStationCandidates(input, list, localCandidates);
+        fetchHeartRailsStations(keyword).then(function (remoteCandidates) {
+          if (input.value !== keyword) return;
+          renderStationCandidates(input, list, mergeStationCandidates(remoteCandidates, localCandidates));
         });
       }
       function renderStationCandidates(input, list, candidates) {
@@ -677,6 +829,7 @@
         var from = $('fromStation').value.trim();
         var to = $('toStation').value.trim();
         var selected = $('routeProvider').value;
+        var timeInfo = selectedTrainTime();
         if (!from || !to) {
           show('出発駅と到着駅を入力してください。');
           return;
@@ -686,7 +839,16 @@
           show('検索先が見つかりません。');
           return;
         }
-        window.open(provider.buildUrl({ from: from, to: to }), '_blank', 'noopener,noreferrer');
+        window.open(provider.buildUrl({
+          from: from,
+          to: to,
+          date: $('eventDate') ? $('eventDate').value : '',
+          time: timeInfo.time,
+          timeMode: timeInfo.mode,
+          condition: $('condition') ? $('condition').value : '',
+          useShinkansen: $('useShinkansen') ? $('useShinkansen').checked : false,
+          useLimitedExpress: $('useLimitedExpress') ? $('useLimitedExpress').checked : false
+        }), '_blank', 'noopener,noreferrer');
       }
       function buildEventFromForm() {
         var type = itemType.value;
@@ -698,13 +860,16 @@
         var condition = $('condition') ? $('condition').value : '';
         var memo = $('memo') ? $('memo').value : '';
         if (type === 'train') {
+          var trainFlags = [];
+          if ($('useShinkansen') && $('useShinkansen').checked) trainFlags.push('新幹線利用');
+          if ($('useLimitedExpress') && $('useLimitedExpress').checked) trainFlags.push('特急利用');
           return {
             type: type,
             date: date,
             start: start,
             end: end,
             title: ($('fromStation').value || '出発駅') + ' → ' + ($('toStation').value || '到着駅'),
-            meta: condition + ' / ' + $('timeMode').value + ' / 検索先: ' + routeSearchProviders[$('routeProvider').value].label,
+            meta: [condition, $('timeMode').value, '検索先: ' + routeSearchProviders[$('routeProvider').value].label].concat(trainFlags).join(' / '),
             note: memo,
             color: item.color
           };
