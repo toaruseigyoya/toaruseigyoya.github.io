@@ -47,6 +47,11 @@
       gap: 16px;
       align-items: start;
     }
+    .app.train-entry-mode {
+      grid-template-columns: minmax(520px, 3fr) minmax(340px, 2fr);
+    }
+    .app.train-entry-mode .timeline-panel { order: 1; }
+    .app.train-entry-mode .input-panel { order: 2; }
     .panel {
       background: rgba(255,255,255,.92);
       border: 1px solid rgba(255,255,255,.95);
@@ -159,6 +164,36 @@
       margin: 0;
       accent-color: var(--blue);
     }
+    .train-assist {
+      display: grid;
+      gap: 8px;
+      grid-column: 1 / -1;
+    }
+    .constraint-box,
+    .search-summary,
+    .warning-box,
+    .edit-banner {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #f8fbff;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 800;
+      white-space: pre-wrap;
+    }
+    .warning-box {
+      display: none;
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+    }
+    .warning-box.active { display: block; }
+    .edit-banner {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
     .planner-head { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto auto; gap: 8px; align-items: end; margin-bottom: 10px; }
     .timeline { display: grid; gap: 12px; max-height: 780px; overflow: auto; padding-right: 4px; }
     .day { border-top: 2px solid var(--line); padding-top: 10px; }
@@ -206,6 +241,11 @@
       .app { grid-template-columns: 1fr; }
       .planner-head { grid-template-columns: 1fr 1fr; }
     }
+    @media (max-width: 768px) {
+      .app.train-entry-mode { grid-template-columns: 1fr; }
+      .app.train-entry-mode .timeline-panel,
+      .app.train-entry-mode .input-panel { order: initial; }
+    }
     @media (max-width: 560px) {
       main { padding-inline: 12px; }
       .form-grid, .actions, .planner-head { grid-template-columns: 1fr; }
@@ -224,8 +264,8 @@
       <p class="lead">旅行、出張、現地作業の「移動」をまとめて、1日の流れを時系列の工程表として確認できます。まず日程を入力し、必要な項目だけ選んで登録します。</p>
     </section>
 
-    <div class="app">
-      <section class="panel" aria-label="入力スペース">
+    <div class="app" id="appRoot">
+      <section class="panel input-panel" aria-label="入力スペース">
         <div class="panel-head"><h2>入力</h2><button class="ghost" id="sampleButton" type="button">サンプル</button></div>
 
         <section class="step" aria-label="日程入力">
@@ -257,7 +297,7 @@
         <div class="status" id="status" aria-live="polite"></div>
       </section>
 
-      <section class="panel" aria-label="工程表">
+      <section class="panel timeline-panel" aria-label="工程表">
         <div class="planner-head">
           <div><label for="projectRange">全体日程</label><input id="projectRange" placeholder="例: 5/11～5/16"></div>
           <button class="ghost" id="exportButton" type="button">JSON保存</button>
@@ -293,7 +333,10 @@
       var storageKey = 'toaruseigyoya-itinerary-app';
       var providerKey = 'toaruseigyoya-itinerary-route-provider';
       var events = loadEvents();
+      var editingTrainId = null;
+      var trainPopupRef = null;
       var status = document.getElementById('status');
+      var appRoot = document.getElementById('appRoot');
       var timeline = document.getElementById('timeline');
       var projectRange = document.getElementById('projectRange');
       var startDate = document.getElementById('startDate');
@@ -303,6 +346,7 @@
       var itemType = document.getElementById('itemType');
       var detailTitle = document.getElementById('detailTitle');
       var detailFields = document.getElementById('detailFields');
+      var addEventButton = document.getElementById('addEventButton');
 
       var transportTypes = {
         train: { label: '電車', className: 'train', color: '#2563eb' },
@@ -342,7 +386,8 @@
         yahoo: {
           label: 'Yahoo路線情報',
           buildUrl: function (data) {
-            var url = new URL('https://transit.yahoo.co.jp/search/result');
+            if (data.from && data.to && data.date && data.time) return buildYahooTransitUrl(data);
+            var url = new URL('https://transit.yahoo.co.jp/search/print');
             url.searchParams.set('from', data.from);
             url.searchParams.set('to', data.to);
             applyYahooDateTime(url, data);
@@ -417,7 +462,31 @@
       function uid() { return String(Date.now()) + Math.random().toString(16).slice(2); }
       function today() { return new Date().toISOString().slice(0, 10); }
       function loadEvents() {
-        try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (e) { return []; }
+        try {
+          var raw = JSON.parse(localStorage.getItem(storageKey) || '[]');
+          return Array.isArray(raw) ? raw.map(normalizeEvent) : [];
+        } catch (e) { return []; }
+      }
+      function normalizeEvent(item) {
+        var normalized = Object.assign({}, item || {});
+        if (!normalized.id) normalized.id = uid();
+        if (normalized.type === 'train') {
+          var split = splitTrainTitle(normalized.title);
+          normalized.from = normalized.from || split.from || '';
+          normalized.to = normalized.to || split.to || '';
+          normalized.departureTime = normalized.departureTime || normalized.start || '';
+          normalized.arrivalTime = normalized.arrivalTime || normalized.end || '';
+          normalized.lineName = normalized.lineName || '';
+          normalized.trainName = normalized.trainName || '';
+          normalized.start = normalized.departureTime || normalized.start || '';
+          normalized.end = normalized.arrivalTime || normalized.end || '';
+          if (!normalized.title) normalized.title = [normalized.from || '出発駅', normalized.to || '到着駅'].join(' → ');
+        }
+        return normalized;
+      }
+      function splitTrainTitle(title) {
+        var parts = String(title || '').split(/\s*(?:→|竊・)\s*/);
+        return { from: parts[0] || '', to: parts[1] || '' };
       }
       function save() {
         localStorage.setItem(storageKey, JSON.stringify(events));
@@ -445,25 +514,43 @@
         var hasDates = Boolean(startDate.value && endDate.value);
         itemStep.hidden = !hasDates;
         detailStep.hidden = !hasDates || !itemType.value;
+        updateTrainModeClass();
         if (hasDates) {
           projectRange.value = startDate.value + ' ～ ' + endDate.value;
         }
         save();
       }
-      function sortEvents(a, b) {
-        return String(a.date).localeCompare(String(b.date)) || String(a.start || '').localeCompare(String(b.start || ''));
+      function updateTrainModeClass() {
+        if (!appRoot) return;
+        appRoot.classList.toggle('train-entry-mode', itemType.value === 'train');
       }
+      function sortEvents(a, b) {
+        return String(a.date).localeCompare(String(b.date)) || String(eventStart(a) || '').localeCompare(String(eventStart(b) || ''));
+      }
+      function eventStart(item) { return item.departureTime || item.start || ''; }
+      function eventEnd(item) { return item.arrivalTime || item.end || item.departureTime || item.start || ''; }
       function eventTime(item) {
         if (item.start && item.end) return item.start + '〜' + item.end;
         return item.start || item.end || '時間未定';
       }
+      function normalizedEventTime(item) {
+        var start = eventStart(item);
+        var end = eventEnd(item);
+        if (start && end && start !== end) return start + ' - ' + end;
+        return start || end || '時間未定';
+      }
+      eventTime = normalizedEventTime;
       function typeLabel(type) {
         return transportTypes[type] ? transportTypes[type].label : '移動';
       }
       function addEvent(item) {
         if (!item.date) { show('日付を入力してください。'); return; }
         if (!item.title) { show('項目名または移動先を入力してください。'); return; }
-        events.push(Object.assign({ id: uid() }, item));
+        if (item.id) {
+          events = events.map(function (event) { return event.id === item.id ? normalizeEvent(item) : event; });
+        } else {
+          events.push(normalizeEvent(Object.assign({ id: uid() }, item)));
+        }
         save();
         render();
         show('工程表へ追加しました。');
@@ -528,6 +615,14 @@
             copy.className = 'ghost';
             copy.textContent = '複製';
             copy.addEventListener('click', function () { duplicateEvent(item.id); });
+            if (item.type === 'train') {
+              var edit = document.createElement('button');
+              edit.type = 'button';
+              edit.className = 'ghost';
+              edit.textContent = '編集';
+              edit.addEventListener('click', function () { editTrainEvent(item.id); });
+              actions.appendChild(edit);
+            }
             var del = document.createElement('button');
             del.type = 'button';
             del.className = 'danger';
@@ -598,6 +693,139 @@
           $('toStation').value = from;
         });
       }
+      renderTrainForm = function () {
+        var editing = editingTrainId ? events.find(function (event) { return event.id === editingTrainId; }) : null;
+        detailTitle.textContent = '電車区間の入力';
+        detailFields.innerHTML =
+          '<div class="form-grid">' +
+          (editing ? '<div class="wide edit-banner">編集中の電車区間を工程表に反映します。</div>' : '') +
+          '<div class="wide"><h3>電車区間の入力</h3></div>' +
+          '<div class="train-assist"><div class="constraint-box" id="trainConstraintBox"></div><div class="search-summary" id="trainSearchSummary"></div><div class="warning-box" id="trainWarningBox"></div></div>' +
+          fieldHtml('eventDate', '日付', 'date', '') +
+          selectHtml('timeMode', '検索基準', ['出発時間', '到着時間'], false) +
+          fieldHtml('departureTime', '出発時刻', 'time', '') +
+          fieldHtml('arrivalTime', '到着時刻', 'time', '') +
+          stationFieldHtml('fromStation', 'fromStationSuggestList', '出発駅', '名古屋') +
+          stationFieldHtml('toStation', 'toStationSuggestList', '到着駅', '東京') +
+          selectHtml('routeProvider', '検索先', [], true) +
+          selectHtml('condition', '条件', ['時間優先', '乗り換え回数が少ないルートを優先', '金額が安いルートを優先'], true) +
+          fieldHtml('lineName', '路線名', 'text', '例：東海道新幹線') +
+          fieldHtml('trainName', '便名・種別', 'text', '例：のぞみ5号') +
+          '<div class="wide">' + checkboxHtml('useShinkansen', '新幹線を利用する') + checkboxHtml('useLimitedExpress', '特急を利用する') + '</div>' +
+          textAreaHtml('memo', '経路・メモ', '外部サイトで確認した乗換、ホーム、注意事項など') +
+          '</div>' +
+          '<div class="actions"><button class="ghost" id="searchRouteButton" type="button">Yahoo路線情報で検索 ↗</button><button class="ghost" id="swapStationButton" type="button">駅を入れ替え</button></div>' +
+          '<div class="actions"><button class="ghost" id="cancelTrainButton" type="button">戻る</button></div>' +
+          '<p class="hint">検索結果は外部サイトで確認し、出発時刻・到着時刻・路線名・便名を手入力して工程表に反映します。</p>';
+        setCommonDefaults();
+        renderRouteProviderOptions();
+        bindStationSuggestions();
+        fillTrainForm(editing);
+        addEventButton.textContent = '工程表に反映する';
+        $('searchRouteButton').addEventListener('click', openSelectedRouteSearch);
+        $('swapStationButton').addEventListener('click', function () {
+          var from = $('fromStation').value;
+          $('fromStation').value = $('toStation').value;
+          $('toStation').value = from;
+          updateTrainAssist();
+        });
+        $('cancelTrainButton').addEventListener('click', function () {
+          editingTrainId = null;
+          itemType.value = '';
+          updateStepState();
+          renderDetailForm();
+          addEventButton.textContent = '蟾･遞玖｡ｨ縺ｸ霑ｽ蜉';
+          show('');
+        });
+        ['eventDate', 'timeMode', 'departureTime', 'arrivalTime', 'fromStation', 'toStation', 'routeProvider', 'condition'].forEach(function (id) {
+          var el = $(id);
+          if (el) el.addEventListener('input', updateTrainAssist);
+          if (el) el.addEventListener('change', updateTrainAssist);
+        });
+        updateTrainAssist();
+      };
+      function fillTrainForm(item) {
+        if (!item) return;
+        if ($('eventDate')) $('eventDate').value = item.date || startDate.value || today();
+        if ($('departureTime')) $('departureTime').value = item.departureTime || item.start || '';
+        if ($('arrivalTime')) $('arrivalTime').value = item.arrivalTime || item.end || '';
+        if ($('fromStation')) $('fromStation').value = item.from || splitTrainTitle(item.title).from || '';
+        if ($('toStation')) $('toStation').value = item.to || splitTrainTitle(item.title).to || '';
+        if ($('lineName')) $('lineName').value = item.lineName || '';
+        if ($('trainName')) $('trainName').value = item.trainName || '';
+        if ($('memo')) $('memo').value = item.note || '';
+        if ($('timeMode')) $('timeMode').value = item.timeModeLabel || '出発時間';
+      }
+      function editTrainEvent(id) {
+        var item = events.find(function (event) { return event.id === id && event.type === 'train'; });
+        if (!item) return;
+        editingTrainId = id;
+        itemType.value = 'train';
+        updateStepState();
+        renderDetailForm();
+        detailStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      function calcTrainConstraints(segments, targetIndex) {
+        var prev = segments[targetIndex - 1] || null;
+        var next = segments[targetIndex] || null;
+        return {
+          earliestDeparture: prev ? eventEnd(prev) : null,
+          latestArrival: next ? eventStart(next) : null
+        };
+      }
+      function trainDraftPosition() {
+        var draft = {
+          id: editingTrainId || '__draft__',
+          date: ($('eventDate') && $('eventDate').value) || startDate.value || today(),
+          start: ($('departureTime') && $('departureTime').value) || '',
+          departureTime: ($('departureTime') && $('departureTime').value) || ''
+        };
+        var segments = events.filter(function (event) { return event.id !== editingTrainId; }).sort(sortEvents);
+        var targetIndex = segments.findIndex(function (event) { return sortEvents(draft, event) < 0; });
+        if (targetIndex < 0) targetIndex = segments.length;
+        return { segments: segments, targetIndex: targetIndex };
+      }
+      function updateTrainAssist() {
+        var box = $('trainConstraintBox');
+        var summary = $('trainSearchSummary');
+        var warning = $('trainWarningBox');
+        if (!box || !summary || !warning) return;
+        var position = trainDraftPosition();
+        var constraints = calcTrainConstraints(position.segments, position.targetIndex);
+        var lines = [];
+        if (constraints.earliestDeparture) lines.push('最早出発: ' + constraints.earliestDeparture + ' 以降');
+        if (constraints.latestArrival) lines.push('必着: ' + constraints.latestArrival + ' まで');
+        box.textContent = lines.length ? '参考条件\n' + lines.join('\n') : '参考条件\n前後工程がないため、時間制約はありません。';
+        var searchTime = resolveTrainSearchTime(constraints);
+        summary.textContent = '検索条件\n' + [
+          '区間: ' + (($('fromStation') && $('fromStation').value) || '未入力') + ' → ' + (($('toStation') && $('toStation').value) || '未入力'),
+          '日付: ' + (($('eventDate') && $('eventDate').value) || '未入力'),
+          '時刻目安: ' + (searchTime.time || '未入力') + ' / ' + (searchTime.mode === 'arrival' ? '到着' : '出発')
+        ].join('\n');
+        var messages = [];
+        var departure = $('departureTime') && $('departureTime').value;
+        var arrival = $('arrivalTime') && $('arrivalTime').value;
+        if (constraints.earliestDeparture && departure && departure < constraints.earliestDeparture) messages.push('出発時刻が前工程の終了より早い可能性があります。');
+        if (constraints.latestArrival && arrival && arrival > constraints.latestArrival) messages.push('到着時刻が次工程の開始を超えています。');
+        warning.textContent = messages.join('\n');
+        warning.classList.toggle('active', messages.length > 0);
+        updateTrainSearchButtonLabel();
+      }
+      function resolveTrainSearchTime(constraints) {
+        var mode = $('timeMode') && $('timeMode').value === '到着時間' ? 'arrival' : 'departure';
+        var departure = $('departureTime') && $('departureTime').value;
+        var arrival = $('arrivalTime') && $('arrivalTime').value;
+        if (constraints && constraints.earliestDeparture) return { mode: 'departure', time: constraints.earliestDeparture };
+        if (mode === 'arrival' && arrival) return { mode: 'arrival', time: arrival };
+        if (departure) return { mode: 'departure', time: departure };
+        return { mode: 'departure', time: '09:00' };
+      }
+      function updateTrainSearchButtonLabel() {
+        var button = $('searchRouteButton');
+        var selected = $('routeProvider') && $('routeProvider').value;
+        if (!button || !selected || !routeSearchProviders[selected]) return;
+        button.textContent = routeSearchProviders[selected].label + 'で検索 ↗';
+      }
       function renderCarForm(type) {
         var label = transportTypes[type].label;
         detailFields.innerHTML =
@@ -648,6 +876,20 @@
         var time = mode === 'arrival' ? (($('endTime') && $('endTime').value) || ($('startTime') && $('startTime').value) || '') : (($('startTime') && $('startTime').value) || ($('endTime') && $('endTime').value) || '');
         return { mode: mode, time: time };
       }
+      selectedTrainTime = function () {
+        var position = trainDraftPosition();
+        var constraints = calcTrainConstraints(position.segments, position.targetIndex);
+        var resolved = resolveTrainSearchTime(constraints);
+        var mode = resolved.mode;
+        var time = resolved.time || '';
+        if (!time) {
+          mode = $('timeMode') && ($('timeMode').value === '到着時間' || $('timeMode').value === '蛻ｰ逹譎る俣') ? 'arrival' : 'departure';
+          time = mode === 'arrival'
+            ? (($('arrivalTime') && $('arrivalTime').value) || ($('endTime') && $('endTime').value) || ($('departureTime') && $('departureTime').value) || ($('startTime') && $('startTime').value) || '')
+            : (($('departureTime') && $('departureTime').value) || ($('startTime') && $('startTime').value) || ($('arrivalTime') && $('arrivalTime').value) || ($('endTime') && $('endTime').value) || '');
+        }
+        return { mode: mode, time: time };
+      };
       function dateParts(dateText) {
         var parts = String(dateText || '').split('-');
         return {
@@ -662,6 +904,28 @@
           hh: parts[0] || '',
           mm: parts[1] || ''
         };
+      }
+      function parseDateParts(dateText) {
+        var parts = String(dateText || '').split('-').map(Number);
+        if (!parts[0] || !parts[1] || !parts[2]) throw new Error('Invalid date format');
+        return { year: parts[0], month: parts[1], day: parts[2] };
+      }
+      function buildYahooTransitUrl(data) {
+        var dp = parseDateParts(data.date);
+        var tp = timeParts(data.time);
+        var minute = Number(tp.mm || 0);
+        var params = new URLSearchParams({
+          from: data.from || '',
+          to: data.to || '',
+          y: String(dp.year),
+          m: String(dp.month),
+          d: String(dp.day),
+          hh: String(tp.hh || '0').padStart(2, '0'),
+          m1: String(Math.floor(minute / 10)),
+          m2: String(minute % 10),
+          type: data.condition === '金額が安いルートを優先' ? '4' : '1'
+        });
+        return 'https://transit.yahoo.co.jp/search/print?' + params.toString();
       }
       function toUnixSeconds(dateText, timeText) {
         var date = new Date(String(dateText || today()) + 'T' + String(timeText || '00:00') + ':00');
@@ -705,7 +969,11 @@
           select.appendChild(option);
         });
         select.value = localStorage.getItem(providerKey) || 'yahoo';
-        select.addEventListener('change', function () { localStorage.setItem(providerKey, select.value); });
+        select.addEventListener('change', function () {
+          localStorage.setItem(providerKey, select.value);
+          updateTrainSearchButtonLabel();
+          updateTrainAssist();
+        });
       }
       function loadStations() {
         stationData = fallbackStationData;
@@ -816,6 +1084,7 @@
             event.preventDefault();
             input.value = station.name;
             hideStationCandidates(list);
+            updateTrainAssist();
           });
           list.appendChild(item);
         });
@@ -824,6 +1093,17 @@
       function hideStationCandidates(list) {
         list.innerHTML = '';
         list.style.display = 'none';
+      }
+      function openTrainSearchPopup(searchUrl) {
+        var popupW = 480;
+        var popupH = window.screen.height;
+        var left = Math.max(0, window.screen.width - popupW);
+        trainPopupRef = window.open(
+          searchUrl,
+          'trainSearch',
+          'width=' + popupW + ',height=' + popupH + ',left=' + left + ',top=0,resizable=yes,scrollbars=yes'
+        );
+        if (trainPopupRef) trainPopupRef.focus();
       }
       function openSelectedRouteSearch() {
         var from = $('fromStation').value.trim();
@@ -839,7 +1119,11 @@
           show('検索先が見つかりません。');
           return;
         }
-        window.open(provider.buildUrl({
+        if (!$('eventDate') || !$('eventDate').value || !timeInfo.time) {
+          show('検索前に日付と時刻の目安を入力してください。');
+          return;
+        }
+        openTrainSearchPopup(provider.buildUrl({
           from: from,
           to: to,
           date: $('eventDate') ? $('eventDate').value : '',
@@ -848,7 +1132,7 @@
           condition: $('condition') ? $('condition').value : '',
           useShinkansen: $('useShinkansen') ? $('useShinkansen').checked : false,
           useLimitedExpress: $('useLimitedExpress') ? $('useLimitedExpress').checked : false
-        }), '_blank', 'noopener,noreferrer');
+        }));
       }
       function buildEventFromForm() {
         var type = itemType.value;
@@ -889,7 +1173,69 @@
           color: item.color
         };
       }
+      buildEventFromForm = function () {
+        var type = itemType.value;
+        var item = transportTypes[type];
+        if (!item) return null;
+        var date = $('eventDate') ? $('eventDate').value : startDate.value;
+        var condition = $('condition') ? $('condition').value : '';
+        var memo = $('memo') ? $('memo').value : '';
+        if (type === 'train') {
+          var from = ($('fromStation') && $('fromStation').value.trim()) || '';
+          var to = ($('toStation') && $('toStation').value.trim()) || '';
+          var departureTime = ($('departureTime') && $('departureTime').value) || '';
+          var arrivalTime = ($('arrivalTime') && $('arrivalTime').value) || '';
+          if (!date) { show('日付を入力してください。'); return null; }
+          if (!from || !to) { show('出発駅と到着駅を入力してください。'); return null; }
+          if (!departureTime || !arrivalTime) { show('出発時刻と到着時刻を入力してください。'); return null; }
+          var provider = routeSearchProviders[$('routeProvider').value];
+          var trainFlags = [];
+          if ($('useShinkansen') && $('useShinkansen').checked) trainFlags.push('新幹線利用');
+          if ($('useLimitedExpress') && $('useLimitedExpress').checked) trainFlags.push('特急利用');
+          return {
+            id: editingTrainId || '',
+            type: type,
+            date: date,
+            start: departureTime,
+            end: arrivalTime,
+            from: from,
+            to: to,
+            departureTime: departureTime,
+            arrivalTime: arrivalTime,
+            lineName: ($('lineName') && $('lineName').value.trim()) || '',
+            trainName: ($('trainName') && $('trainName').value.trim()) || '',
+            timeModeLabel: ($('timeMode') && $('timeMode').value) || '出発時間',
+            title: from + ' → ' + to,
+            meta: [
+              ($('lineName') && $('lineName').value.trim()) || '',
+              ($('trainName') && $('trainName').value.trim()) || '',
+              condition,
+              provider ? '検索先: ' + provider.label : ''
+            ].concat(trainFlags).filter(Boolean).join(' / '),
+            note: memo,
+            color: item.color
+          };
+        }
+        var start = $('startTime') ? $('startTime').value : '';
+        var end = $('endTime') ? $('endTime').value : '';
+        var fromPlace = $('fromPlace') ? $('fromPlace').value : '';
+        var toPlace = $('toPlace') ? $('toPlace').value : '';
+        var meta = condition + ' / ' + ($('timeMode') ? $('timeMode').value : '');
+        if ($('highway')) meta += ' / ' + $('highway').value;
+        return {
+          type: type,
+          date: date,
+          start: start,
+          end: end,
+          title: (fromPlace || '蜃ｺ逋ｺ蝨ｰ') + ' 竊・' + (toPlace || '逶ｮ逧・慍'),
+          meta: meta,
+          note: memo,
+          color: item.color
+        };
+      };
       function clearDetailForm() {
+        if (itemType.value === 'train') editingTrainId = null;
+        addEventButton.textContent = itemType.value === 'train' ? '工程表に反映する' : '蟾･遞玖｡ｨ縺ｸ霑ｽ蜉';
         renderDetailForm();
         show('');
       }
@@ -911,7 +1257,7 @@
         reader.onload = function () {
           try {
             var data = JSON.parse(String(reader.result || '{}'));
-            events = Array.isArray(data.events) ? data.events : [];
+            events = Array.isArray(data.events) ? data.events.map(normalizeEvent) : [];
             projectRange.value = data.range || '';
             startDate.value = data.startDate || startDate.value;
             endDate.value = data.endDate || endDate.value;
@@ -929,12 +1275,18 @@
       endDate.addEventListener('change', updateStepState);
       projectRange.addEventListener('change', save);
       itemType.addEventListener('change', function () {
+        if (itemType.value !== 'train') editingTrainId = null;
+        addEventButton.textContent = itemType.value === 'train' ? '工程表に反映する' : '蟾･遞玖｡ｨ縺ｸ霑ｽ蜉';
         updateStepState();
         renderDetailForm();
       });
       document.getElementById('addEventButton').addEventListener('click', function () {
         var item = buildEventFromForm();
-        if (item) addEvent(item);
+        if (item) {
+          addEvent(item);
+          if (item.type === 'train') editingTrainId = item.id || null;
+          updateTrainAssist();
+        }
       });
       document.getElementById('clearDetailButton').addEventListener('click', clearDetailForm);
       document.getElementById('clearAllButton').addEventListener('click', function () {
