@@ -107,6 +107,45 @@
       margin-top: 6px;
     }
     .suggestions button { padding: 4px 8px; border-radius: 999px; font-size: .72rem; }
+    .station-input-area {
+      position: relative;
+    }
+    .station-suggest-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      margin: 4px 0 0;
+      padding: 4px;
+      list-style: none;
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 14px 30px rgba(31,41,55,.16);
+    }
+    .station-suggest-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 850;
+    }
+    .station-suggest-item:hover,
+    .station-suggest-item:focus {
+      background: #e0f2fe;
+      outline: none;
+    }
+    .station-suggest-sub {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 750;
+    }
     .planner-head { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto auto; gap: 8px; align-items: end; margin-bottom: 10px; }
     .timeline { display: grid; gap: 12px; max-height: 780px; overflow: auto; padding-right: 4px; }
     .day { border-top: 2px solid var(--line); padding-top: 10px; }
@@ -263,7 +302,24 @@
         walk: { label: '徒歩', className: 'walk', color: '#15803d' }
       };
 
-      var stationCandidates = ['名古屋（JR）', '名古屋（あおなみ線）', '名鉄名古屋', '近鉄名古屋', '東京', '品川', '新大阪', '京都', '岐阜', '布袋', '金山', '栄', '大阪', '新宿', '渋谷'];
+      var stationData = [];
+      var fallbackStationData = [
+        { name: '布袋', line: '名鉄犬山線', prefecture: '愛知県', kana: 'ほてい' },
+        { name: '名古屋', line: 'JR東海道本線', prefecture: '愛知県', kana: 'なごや' },
+        { name: '名古屋', line: 'あおなみ線', prefecture: '愛知県', kana: 'なごや' },
+        { name: '名鉄名古屋', line: '名鉄名古屋本線', prefecture: '愛知県', kana: 'めいてつなごや' },
+        { name: '近鉄名古屋', line: '近鉄名古屋線', prefecture: '愛知県', kana: 'きんてつなごや' },
+        { name: '金山', line: 'JR東海道本線', prefecture: '愛知県', kana: 'かなやま' },
+        { name: '東京', line: 'JR東海道新幹線', prefecture: '東京都', kana: 'とうきょう' },
+        { name: '品川', line: 'JR東海道新幹線', prefecture: '東京都', kana: 'しながわ' },
+        { name: '新大阪', line: 'JR東海道新幹線', prefecture: '大阪府', kana: 'しんおおさか' },
+        { name: '京都', line: 'JR東海道新幹線', prefecture: '京都府', kana: 'きょうと' },
+        { name: '岐阜', line: 'JR東海道本線', prefecture: '岐阜県', kana: 'ぎふ' },
+        { name: '栄', line: '名古屋市営地下鉄東山線', prefecture: '愛知県', kana: 'さかえ' },
+        { name: '大阪', line: 'JR東海道本線', prefecture: '大阪府', kana: 'おおさか' },
+        { name: '新宿', line: 'JR山手線', prefecture: '東京都', kana: 'しんじゅく' },
+        { name: '渋谷', line: 'JR山手線', prefecture: '東京都', kana: 'しぶや' }
+      ];
 
       var routeSearchProviders = {
         yahoo: {
@@ -443,6 +499,9 @@
       function textAreaHtml(id, label, placeholder) {
         return '<div class="wide"><label for="' + id + '">' + label + '</label><textarea id="' + id + '" placeholder="' + (placeholder || '') + '"></textarea></div>';
       }
+      function stationFieldHtml(inputId, listId, label, placeholder) {
+        return '<div class="station-input-area"><label for="' + inputId + '">' + label + '</label><input id="' + inputId + '" type="text" autocomplete="off" placeholder="' + (placeholder || '') + '"><ul id="' + listId + '" class="station-suggest-list"></ul></div>';
+      }
       function selectHtml(id, label, options, wide) {
         return '<div' + (wide ? ' class="wide"' : '') + '><label for="' + id + '">' + label + '</label><select id="' + id + '">' + options.map(function (option) { return '<option value="' + option + '">' + option + '</option>'; }).join('') + '</select></div>';
       }
@@ -467,13 +526,12 @@
           selectHtml('timeMode', '基準', ['出発時間', '到着時間'], false) +
           fieldHtml('startTime', '出発時間', 'time', '') +
           fieldHtml('endTime', '到着時間', 'time', '') +
-          fieldHtml('fromStation', '出発駅', 'text', '名古屋', { wide: false }) +
-          fieldHtml('toStation', '到着駅', 'text', '東京', { wide: false }) +
+          stationFieldHtml('fromStation', 'fromStationSuggestList', '出発駅', '名古屋') +
+          stationFieldHtml('toStation', 'toStationSuggestList', '到着駅', '東京') +
           selectHtml('routeProvider', '検索先', [], true) +
           selectHtml('condition', '条件', ['時間優先', '乗り換え回数が少ないルートを優先', '金額が安いルートを優先'], true) +
           textAreaHtml('memo', '経路・メモ', '例: 名古屋駅発 のぞみ号 東京行き') +
           '</div>' +
-          '<div class="suggestions" id="stationSuggestionButtons"></div>' +
           '<div class="actions"><button class="ghost" id="searchRouteButton" type="button">経路検索</button><button class="ghost" id="swapStationButton" type="button">駅を入れ替え</button></div>' +
           '<p class="hint">駅名候補は入力欄を選ぶと表示されます。検索結果は選択した外部サイトを別タブで開きます。</p>';
         setCommonDefaults();
@@ -544,28 +602,76 @@
         select.value = localStorage.getItem(providerKey) || 'yahoo';
         select.addEventListener('change', function () { localStorage.setItem(providerKey, select.value); });
       }
-      function bindStationSuggestions() {
-        ['fromStation', 'toStation'].forEach(function (id) {
-          var input = $(id);
-          input.addEventListener('input', function () { renderStationSuggestions(input); });
-          input.addEventListener('focus', function () { renderStationSuggestions(input); });
-        });
-        renderStationSuggestions($('fromStation'));
+      function loadStations() {
+        return fetch('./data/stations.json')
+          .then(function (response) {
+            if (!response.ok) throw new Error('stations.json not found');
+            return response.json();
+          })
+          .then(function (data) {
+            stationData = Array.isArray(data) && data.length ? data : fallbackStationData;
+          })
+          .catch(function () {
+            stationData = fallbackStationData;
+          });
       }
-      function renderStationSuggestions(targetInput) {
-        var box = $('stationSuggestionButtons');
-        if (!box || !targetInput) return;
-        var value = targetInput.value.trim();
-        var matches = stationCandidates.filter(function (station) { return !value || station.indexOf(value) >= 0; }).slice(0, 8);
-        box.innerHTML = '';
-        matches.forEach(function (station) {
-          var button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'ghost';
-          button.textContent = station;
-          button.addEventListener('click', function () { targetInput.value = station.replace(/（.*?）/g, ''); });
-          box.appendChild(button);
+      function normalizeStationText(text) {
+        return String(text || '').normalize('NFKC').toLowerCase().replace(/駅$/, '').trim();
+      }
+      function searchStationCandidates(keyword) {
+        var query = normalizeStationText(keyword);
+        if (!query) return [];
+        return stationData.filter(function (station) {
+          var name = normalizeStationText(station.name);
+          var kana = normalizeStationText(station.kana || station.yomi || '');
+          var line = normalizeStationText(station.line || '');
+          var prefecture = normalizeStationText(station.prefecture || station.pref || '');
+          return name.indexOf(query) >= 0 || kana.indexOf(query) >= 0 || line.indexOf(query) >= 0 || prefecture.indexOf(query) >= 0;
+        }).slice(0, 10);
+      }
+      function bindStationSuggestions() {
+        setupStationAutocomplete('fromStation', 'fromStationSuggestList');
+        setupStationAutocomplete('toStation', 'toStationSuggestList');
+      }
+      function setupStationAutocomplete(inputId, listId) {
+        var input = $(inputId);
+        var list = $(listId);
+        if (!input || !list) return;
+        input.addEventListener('input', function () {
+          renderStationCandidates(input, list, searchStationCandidates(input.value));
         });
+        input.addEventListener('focus', function () {
+          renderStationCandidates(input, list, searchStationCandidates(input.value));
+        });
+        input.addEventListener('blur', function () {
+          setTimeout(function () { hideStationCandidates(list); }, 160);
+        });
+      }
+      function renderStationCandidates(input, list, candidates) {
+        if (!input.value.trim() || !candidates.length) {
+          hideStationCandidates(list);
+          return;
+        }
+        list.innerHTML = '';
+        candidates.forEach(function (station) {
+          var item = document.createElement('li');
+          item.className = 'station-suggest-item';
+          item.tabIndex = 0;
+          item.dataset.name = station.name;
+          var subText = [station.line || '', station.prefecture || station.pref || ''].filter(Boolean).join(' / ');
+          item.innerHTML = '<span>' + station.name + '</span>' + (subText ? '<span class="station-suggest-sub">' + subText + '</span>' : '');
+          item.addEventListener('mousedown', function (event) {
+            event.preventDefault();
+            input.value = station.name;
+            hideStationCandidates(list);
+          });
+          list.appendChild(item);
+        });
+        list.style.display = 'block';
+      }
+      function hideStationCandidates(list) {
+        list.innerHTML = '';
+        list.style.display = 'none';
       }
       function openSelectedRouteSearch() {
         var from = $('fromStation').value.trim();
@@ -689,7 +795,7 @@
         save();
         render();
       });
-      init();
+      loadStations().then(init);
     })();
   </script>
 </body>
