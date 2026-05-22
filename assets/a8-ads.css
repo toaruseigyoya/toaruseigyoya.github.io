@@ -1,0 +1,62 @@
+.affiliate-ad {
+  width: min(100%, 920px);
+  margin: 18px auto 0;
+  padding: 14px;
+  border: 1px solid #ead9c9;
+  border-radius: 14px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 10px 26px rgba(85,70,50,.08);
+}
+
+.affiliate-ad__label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #f6fbff;
+  border: 1px solid #dcecf7;
+  color: #526179;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.affiliate-ad__body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 12px;
+  overflow: hidden;
+}
+
+.affiliate-ad__body a {
+  display: inline-flex;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.affiliate-ad__body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.affiliate-ad__status {
+  color: #65708a;
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.page > .affiliate-ad {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 700px) {
+  .affiliate-ad {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+}
