@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像生成の上限と、字幕取得の壁にぶつかった | あいネコ日記</title>
+  <meta name="description" content="2026年5月23日の日記。画像生成の利用上限とYouTube字幕取得の制限にぶつかり、ローカル文字起こしを試した日。">
+  <link rel="canonical" href="https://toaruseigyoya.github.io/articles/2026-05-23/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="画像生成の上限と、字幕取得の壁にぶつかった | あいネコ日記">
+  <meta property="og:description" content="画像生成の利用上限とYouTube字幕取得の制限にぶつかり、ローカル文字起こしを試した日。">
+  <meta property="og:url" content="https://toaruseigyoya.github.io/articles/2026-05-23/">
+  <meta property="og:image" content="https://toaruseigyoya.github.io/assets/images/banner-articles.png">
+  <link rel="stylesheet" href="../diary.css">
+  <script src="/assets/site-config.js"></script>
+  <script defer src="/assets/share-buttons.js"></script>
+</head>
+<body>
+  <div class="site-banner"><img src="/assets/images/banner-articles.png" alt="とある制御屋の備忘録"></div>
+  <main>
+    <a class="crumb" href="../">← あいネコ日記へ戻る</a>
+    <article class="entry">
+      <time datetime="2026-05-23">2026/5/23(土)</time>
+      <h1>画像生成の上限と、字幕取得の壁にぶつかった</h1>
+      <p>今日は、うまくいかないことが続いた。あいネコの差分画像をまとめて作ろうとしていたが、23枚まで整理できたところでDesignGPTの画像生成上限に当たり、残り77件はその場では進められなくなった。</p>
+      <p>もう一つ試していたのが、note記事づくりの材料にするためのYouTube字幕取得だった。`yt-dlp` の設定を追加して処理を進めたところ、字幕ダウンロードの段階までは進んだものの、最終的には `HTTP Error 429: Too Many Requests` で本文を取れなかった。</p>
+      <p>ブラウザから見ても文字起こし本文は読み込まれず、ネットワーク側で止められている可能性が高そうだった。うまくいかないまま何度も同じ方法を繰り返すより、無料で手元処理できる別の道を作る方がよいと判断した。</p>
+      <p>そこでCodexに、字幕が取得できない場合は音声を取得してFaster Whisperで文字起こしする処理を追加してもらった。CPUだけで試した結果、軽いモデルでは5件の処理まで確認できたが、専門用語の誤認識もあり、速度だけで決められないことが分かった。</p>
+      <p>残りの動画は量が多く、高精度モデルを使うと数十時間かかる見込みになった。無料で進めたいこと、PCを使わない時間に処理できること、精度を優先したいことを整理し、承認したうえでバックグラウンド実行へ切り替えた。</p>
+      <p>画像生成も文字起こしも、AIだから際限なく処理できるわけではない。回数制限、アクセス制限、処理時間、精度のばらつきがある。今日は、止まった時に別の方法へ切り替える判断まで含めて、自動化の一部なのだと感じた。</p>
+      <div class="takeaways">
+        <h2>今日の学び</h2>
+        <p><strong>今日の学び：</strong>AIサービスの上限や外部サイトの制限は、処理設計の前提として考える必要がある。</p>
+        <p><strong>次に試すこと：</strong>高精度のローカル文字起こし結果を確認し、記事材料として使える品質か判断する。</p>
+        <p><strong>同じことをやる人への注意点：</strong>取得エラーを繰り返す前に、利用制限と代替手段、処理時間を確認しておく。</p>
+      </div>
+      <div class="tags"><span class="tag">文字起こし</span><span class="tag">画像生成</span><span class="tag">失敗記録</span></div>
+      <nav class="nav-links"><a href="../2026-05-22/">前の日記へ</a><a href="../">一覧へ戻る</a></nav>
+    </article>
+  </main>
+  <footer><nav class="footer-links"><a href="/contact/">お問い合わせ</a><a href="/privacy/">プライバシーポリシー</a><a href="/disclaimer/">免責事項</a></nav>© 2026 とある制御屋の備忘録</footer>
+</body>
+</html>

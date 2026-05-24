@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工程管理に電車検索をつなげてみた | あいネコ日記</title>
+  <meta name="description" content="2026年5月21日の日記。工程管理アプリへ電車移動の入力と経路検索をつなぎ、出張工程で使いやすい形を試した日。">
+  <link rel="canonical" href="https://toaruseigyoya.github.io/articles/2026-05-21/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="工程管理に電車検索をつなげてみた | あいネコ日記">
+  <meta property="og:description" content="工程管理アプリへ電車移動の入力と経路検索をつなぎ、出張工程で使いやすい形を試した日。">
+  <meta property="og:url" content="https://toaruseigyoya.github.io/articles/2026-05-21/">
+  <meta property="og:image" content="https://toaruseigyoya.github.io/assets/images/banner-articles.png">
+  <link rel="stylesheet" href="../diary.css">
+  <script src="/assets/site-config.js"></script>
+  <script defer src="/assets/share-buttons.js"></script>
+</head>
+<body>
+  <div class="site-banner"><img src="/assets/images/banner-articles.png" alt="とある制御屋の備忘録"></div>
+  <main>
+    <a class="crumb" href="../">← あいネコ日記へ戻る</a>
+    <article class="entry">
+      <time datetime="2026-05-21">2026/5/21(木)</time>
+      <h1>工程管理に電車検索をつなげてみた</h1>
+      <p>今日は、公開している工程管理アプリに電車移動の入力機能を追加した。訪問や移動を含む予定を組むとき、工程表とは別に路線検索を開いて時刻を見比べるのが面倒だったので、同じ画面で流れを作れないか試してみた。</p>
+      <p>電車を入力する時だけ、左側に工程表、右側に電車区間の入力フォームを表示する形にした。出発・到着時刻、路線名、列車名、出発駅と到着駅を持てるようにして、保存データやJSONの読み書きにも含めた。</p>
+      <p>経路そのものをアプリ内で判定するのではなく、Yahoo!路線情報などの検索画面を別窓で開き、調べた結果を工程へ反映する形にしている。外部サービスの結果に任せる部分と、自分の工程表で管理する部分を分けた方が無理がない。</p>
+      <p>前後の工程から、何時までに到着したいか、何時以降なら出発できるかの目安も表示するようにした。ただし、範囲外の時刻だからといって保存を禁止するのではなく、警告だけ出すようにした。現場の予定は例外も多く、機械的に止めすぎると逆に使いづらい。</p>
+      <p>既存のデータ形式を壊さずに項目を増やすところは少し気を使った。便利な機能を足すだけでなく、これまで入力していた予定を引き続き読めることも、日常で使うツールには欠かせない。</p>
+      <div class="takeaways">
+        <h2>今日の学び</h2>
+        <p><strong>今日の学び：</strong>外部検索と自作の工程表は、無理に一体化せず入力導線としてつなぐ方が扱いやすい。</p>
+        <p><strong>次に試すこと：</strong>実際の出張予定で入力の手間と警告表示の分かりやすさを確認する。</p>
+        <p><strong>同じことをやる人への注意点：</strong>保存形式を拡張する時は、過去データを読み込める補完処理を先に考える。</p>
+      </div>
+      <div class="tags"><span class="tag">工程管理</span><span class="tag">公開ツール</span><span class="tag">電車移動</span></div>
+      <nav class="nav-links"><a href="../2026-05-20/">前の日記へ</a><a href="../2026-05-22/">次の日記へ</a><a href="../">一覧へ戻る</a></nav>
+    </article>
+  </main>
+  <footer><nav class="footer-links"><a href="/contact/">お問い合わせ</a><a href="/privacy/">プライバシーポリシー</a><a href="/disclaimer/">免責事項</a></nav>© 2026 とある制御屋の備忘録</footer>
+</body>
+</html>
